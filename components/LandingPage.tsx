@@ -13,7 +13,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-lg">
-              <Sparkles className="text-white w-4 h-4" />
+              <span className="text-white text-xs font-bold">V3</span>
             </div>
             <span className="text-xl font-bold tracking-tight">Vib3 Idea Sales</span>
           </div>
@@ -206,7 +206,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
            <div className="flex items-center gap-2 mb-4 md:mb-0">
             <div className="w-6 h-6 bg-black rounded-md flex items-center justify-center">
-              <Sparkles className="text-white w-3 h-3" />
+              <span className="text-white text-[10px] font-bold">V3</span>
             </div>
             <span className="text-lg font-bold tracking-tight">Vib3 Idea Sales</span>
           </div>

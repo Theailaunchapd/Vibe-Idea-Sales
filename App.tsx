@@ -148,7 +148,7 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAppView('landing')}>
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-md">
-              <Sparkles className="text-white w-4 h-4" />
+              <span className="text-white text-xs font-bold">V3</span>
             </div>
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">Vib3 Idea Sales</h1>
           </div>
