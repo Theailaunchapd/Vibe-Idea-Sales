@@ -40,7 +40,8 @@ Vib3 Sales is an AI-powered intelligence platform that scans job boards, reviews
 - **Preview**: `npm run preview`
 
 ## Environment Variables
-- `OPENAI_API_KEY`: Required for AI-powered search and analysis features
+- `AI_INTEGRATIONS_OPENAI_API_KEY`: Provided by Replit AI Integrations (no personal API key needed)
+- `AI_INTEGRATIONS_OPENAI_BASE_URL`: Provided by Replit AI Integrations
 
 ## Recent Changes
 - December 21, 2025: Switched from Gemini to OpenAI for all AI-powered features

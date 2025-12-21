@@ -2,11 +2,12 @@ import OpenAI from "openai";
 import { JobListing, JobAnalysis, Business, OpportunityAnalysis, RedditIdea, RedditAnalysis } from "../types";
 
 const getClient = () => {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   if (!apiKey) {
-    throw new Error("OpenAI API Key not found. Please set OPENAI_API_KEY.");
+    throw new Error("OpenAI API Key not found.");
   }
-  return new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+  return new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: true });
 };
 
 const cleanJson = (text: string): string => {

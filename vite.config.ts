@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY)
+        'process.env.AI_INTEGRATIONS_OPENAI_API_KEY': JSON.stringify(env.AI_INTEGRATIONS_OPENAI_API_KEY),
+        'process.env.AI_INTEGRATIONS_OPENAI_BASE_URL': JSON.stringify(env.AI_INTEGRATIONS_OPENAI_BASE_URL)
       },
       resolve: {
         alias: {
