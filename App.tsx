@@ -150,7 +150,7 @@ const App: React.FC = () => {
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-md">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Vib3 Sales</h1>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Vib3 Idea Sales</h1>
           </div>
           
           <div className="flex items-center gap-4">

@@ -15,7 +15,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-lg">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Vib3 Sales</span>
+            <span className="text-xl font-bold tracking-tight">Vib3 Idea Sales</span>
           </div>
           <div className="flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-gray-500 hover:text-black transition-colors hidden sm:block">Features</a>
@@ -80,7 +80,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Three Engines. One Platform.</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Vib3 Sales doesn't just find data. It analyzes market gaps and hands you the blueprint to monetize them.</p>
+            <p className="text-gray-500 max-w-xl mx-auto">Vib3 Idea Sales doesn't just find data. It analyzes market gaps and hands you the blueprint to monetize them.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -150,7 +150,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">From Search to Service in Minutes</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Vib3 Sales streamlines the entire agency creation workflow.</p>
+            <p className="text-gray-500 max-w-xl mx-auto">Vib3 Idea Sales streamlines the entire agency creation workflow.</p>
           </div>
 
           <div className="relative">
@@ -208,7 +208,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             <div className="w-6 h-6 bg-black rounded-md flex items-center justify-center">
               <Sparkles className="text-white w-3 h-3" />
             </div>
-            <span className="text-lg font-bold tracking-tight">Vib3 Sales</span>
+            <span className="text-lg font-bold tracking-tight">Vib3 Idea Sales</span>
           </div>
           <div className="flex gap-8 text-sm text-gray-500">
             <a href="#" className="hover:text-black">Privacy</a>
@@ -216,7 +216,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp }) => {
             <a href="#" className="hover:text-black">Twitter</a>
           </div>
           <div className="mt-4 md:mt-0 text-sm text-gray-400">
-            © 2024 Vib3 Sales Inc.
+            © 2024 Vib3 Idea Sales Inc.
           </div>
         </div>
       </footer>
