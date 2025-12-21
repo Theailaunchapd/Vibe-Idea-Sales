@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { JobListing, Business, RedditIdea, UserProfile } from './types';
-import { searchJobs, searchBusinessOpportunities, scanRedditIdeas } from './services/geminiService';
+import { searchJobs, searchBusinessOpportunities, scanRedditIdeas } from './services/openaiService';
 import { JobCard } from './components/JobCard';
 import { BusinessCard } from './components/BusinessCard';
 import { RedditIdeaCard } from './components/RedditIdeaCard';

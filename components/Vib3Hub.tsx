@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { JobListing, JobAnalysis } from '../types';
-import { generateColdEmail, generateWebsiteCode, generateDemoScript } from '../services/geminiService';
+import { generateColdEmail, generateWebsiteCode, generateDemoScript } from '../services/openaiService';
 import { ArrowLeft, Mail, Monitor, PlayCircle, Loader2, Copy, RefreshCw, Check, Code, Zap, AlertCircle } from 'lucide-react';
 
 interface Vib3HubProps {

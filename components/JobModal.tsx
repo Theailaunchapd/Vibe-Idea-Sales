@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { JobListing, JobAnalysis } from '../types';
-import { analyzeJobDeepDive } from '../services/geminiService';
+import { analyzeJobDeepDive } from '../services/openaiService';
 import { X, Briefcase, Bot, Hammer, Loader2, CheckCircle2, ChevronRight, Zap, ArrowRight, DollarSign, Clock, LayoutGrid, Sparkles, Server } from 'lucide-react';
 
 interface JobModalProps {

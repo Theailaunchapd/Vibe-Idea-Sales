@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Business, OpportunityAnalysis } from '../types';
-import { generateOpportunityBrief } from '../services/geminiService';
+import { generateOpportunityBrief } from '../services/openaiService';
 import { ScoreBadge } from './ScoreBadge';
 import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart } from 'lucide-react';
 

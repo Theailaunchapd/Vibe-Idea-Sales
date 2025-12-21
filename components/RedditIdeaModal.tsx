@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { RedditIdea, RedditAnalysis } from '../types';
-import { analyzeRedditIdea } from '../services/geminiService';
+import { analyzeRedditIdea } from '../services/openaiService';
 import { X, Loader2, Target, Zap, TrendingUp, Code2, Rocket, Globe, Palette } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
 
