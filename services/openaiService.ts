@@ -129,6 +129,45 @@ export const generateWebsiteCode = async (job: JobListing): Promise<string | nul
   }
 };
 
+export interface WorkflowDemo {
+  serviceName: string;
+  tagline: string;
+  workflow: {
+    step: number;
+    title: string;
+    description: string;
+    icon: string;
+    duration: string;
+    automation: string;
+  }[];
+  metrics: {
+    timesSaved: string;
+    costReduction: string;
+    accuracy: string;
+    availability: string;
+  };
+  beforeAfter: {
+    before: { title: string; items: string[] };
+    after: { title: string; items: string[] };
+  };
+  callToAction: string;
+}
+
+export const generateWorkflowDemo = async (job: JobListing, analysis: JobAnalysis): Promise<WorkflowDemo | null> => {
+  try {
+    const response = await fetch(`${API_BASE}/generate-workflow-demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job, analysis })
+    });
+    if (!response.ok) throw new Error('Failed to generate workflow demo');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to generate workflow demo", e);
+    return null;
+  }
+};
+
 export const generateDemoScript = async (job: JobListing, analysis: JobAnalysis): Promise<string | null> => {
   try {
     const response = await fetch(`${API_BASE}/generate-demo-script`, {

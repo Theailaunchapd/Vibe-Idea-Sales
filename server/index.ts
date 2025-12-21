@@ -477,6 +477,71 @@ app.post('/api/generate-demo-script', async (req, res) => {
   }
 });
 
+app.post('/api/generate-workflow-demo', async (req, res) => {
+  const { job, analysis } = req.body;
+
+  const prompt = `
+    Create a visual workflow demo for the AI Service: "${analysis?.aiServiceOpportunity?.serviceName || 'AI Automation Service'}".
+    
+    This demo will be shown to the hiring manager at ${job.company} to convince them to use AI instead of hiring a ${job.title}.
+    
+    Generate a step-by-step workflow showing how the AI handles the core tasks.
+    
+    Return JSON with structure:
+    {
+      "serviceName": "Name of the AI Service",
+      "tagline": "Short compelling tagline (10 words max)",
+      "workflow": [
+        {
+          "step": 1,
+          "title": "Step title (3-5 words)",
+          "description": "What happens in this step (1-2 sentences)",
+          "icon": "one of: inbox, zap, brain, checkCircle, send, clock, fileText, users, database, sparkles",
+          "duration": "Time estimate (e.g., '2 seconds', 'instant')",
+          "automation": "What the AI does automatically"
+        }
+      ],
+      "metrics": {
+        "timesSaved": "e.g., '40 hours/week'",
+        "costReduction": "e.g., '80%'",
+        "accuracy": "e.g., '99.5%'",
+        "availability": "e.g., '24/7'"
+      },
+      "beforeAfter": {
+        "before": {
+          "title": "Without AI",
+          "items": ["pain point 1", "pain point 2", "pain point 3"]
+        },
+        "after": {
+          "title": "With ${analysis?.aiServiceOpportunity?.serviceName || 'AI Service'}",
+          "items": ["benefit 1", "benefit 2", "benefit 3"]
+        }
+      },
+      "callToAction": "Compelling CTA text for scheduling a demo"
+    }
+    
+    Make it specific to the ${job.title} role and the tasks mentioned. Create 4-6 workflow steps.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      res.json(JSON.parse(cleanJson(text)));
+    } else {
+      res.status(500).json({ error: "No response" });
+    }
+  } catch (e) {
+    console.error("Failed to generate workflow demo", e);
+    res.status(500).json({ error: "Failed to generate workflow demo" });
+  }
+});
+
 const PORT = 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API server running on port ${PORT}`);
