@@ -100,19 +100,25 @@ app.post('/api/search-jobs', async (req, res) => {
 
 app.post('/api/search-businesses', async (req, res) => {
   const { industry, location, radius = 25 } = req.body;
+  
+  const searchSeed = Date.now() + Math.floor(Math.random() * 1000000);
 
   const prompt = `
     You are an AI Business Opportunity Analyzer.
-    Task: Identify EXACTLY 100 UNIQUE struggling businesses in the "${industry}" industry within a ${radius}-mile radius of "${location}" that are likely hiring for operational roles.
+    Task: Identify EXACTLY 50 UNIQUE struggling businesses in the "${industry}" industry within a ${radius}-mile radius of "${location}" that are likely hiring for operational roles.
+    
+    RANDOMIZATION SEED: ${searchSeed}
+    Use this seed to generate completely different and unique businesses each time. Do NOT repeat any business names or patterns from previous searches.
     
     CRITICAL REQUIREMENTS:
-    - Generate EXACTLY 100 businesses
+    - Generate EXACTLY 50 businesses (no more, no less)
     - Each business MUST be completely unique (different names, addresses, characteristics)
-    - Vary business names creatively - use different naming patterns, owner names, locations within ${location}
+    - Vary business names creatively - use different naming patterns, owner names, street names, neighborhoods
+    - Use creative combinations: first names + last names, location-based names, descriptive names, specialty names
     - Distribute businesses across different neighborhoods/areas within ${radius} miles of ${location}
     - Vary negative scores between 60-95
     - Create diverse pain points and review patterns
-    - Use realistic but varied contact information
+    - Use realistic but varied contact information with different area codes and domains
     
     For each business, simulate analysis of their online presence:
     1. Calculate a "Negative Score" (60-95)
@@ -152,7 +158,7 @@ app.post('/api/search-businesses', async (req, res) => {
       ]
     }
     
-    Remember: Create exactly 100 unique, diverse businesses within ${radius} miles of ${location}. No duplicates.
+    Remember: Create exactly 50 unique, diverse businesses within ${radius} miles of ${location}. Each search must produce completely NEW businesses - never repeat names or patterns. Use seed ${searchSeed} for randomization.
   `;
 
   try {
