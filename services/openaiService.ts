@@ -1,4 +1,4 @@
-import { JobListing, JobAnalysis, Business, OpportunityAnalysis, RedditIdea, RedditAnalysis } from "../types";
+import { JobListing, JobAnalysis, Business, OpportunityAnalysis, RedditIdea, RedditAnalysis, SocialIdea, SocialAnalysis } from "../types";
 
 const API_BASE = '/api';
 
@@ -180,6 +180,36 @@ export const generateDemoScript = async (job: JobListing, analysis: JobAnalysis)
     return data.script || null;
   } catch (e) {
     console.error("Failed to generate script", e);
+    return null;
+  }
+};
+
+export const scanSocialIdeas = async (topic: string): Promise<SocialIdea[]> => {
+  try {
+    const response = await fetch(`${API_BASE}/scan-social`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic })
+    });
+    if (!response.ok) throw new Error('Failed to scan social media');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to scan social media", e);
+    return [];
+  }
+};
+
+export const analyzeSocialIdea = async (idea: SocialIdea): Promise<SocialAnalysis | null> => {
+  try {
+    const response = await fetch(`${API_BASE}/analyze-social-idea`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea })
+    });
+    if (!response.ok) throw new Error('Failed to analyze social idea');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to analyze social idea", e);
     return null;
   }
 };
