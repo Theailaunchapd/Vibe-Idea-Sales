@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { RedditIdea, RedditAnalysis } from '../types';
-import { analyzeRedditIdea } from '../services/openaiService';
-import { X, Loader2, Target, Zap, TrendingUp, Code2, Rocket, Globe, Palette } from 'lucide-react';
+import { RedditIdea, RedditAnalysis, GeneratedDocument } from '../types';
+import { analyzeRedditIdea, generatePRD, generateDeveloperGuide } from '../services/openaiService';
+import { X, Loader2, Target, Zap, TrendingUp, Code2, Rocket, Globe, Palette, FileText, Code } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
+import DocumentModal from './DocumentModal';
 
 interface RedditIdeaModalProps {
   idea: RedditIdea;
@@ -13,6 +14,64 @@ export const RedditIdeaModal: React.FC<RedditIdeaModalProps> = ({ idea, onClose 
   const [analysis, setAnalysis] = useState<RedditAnalysis | null>(idea.analysis || null);
   const [loading, setLoading] = useState(!idea.analysis);
   const [activeTab, setActiveTab] = useState<'blueprint' | 'roadmap' | 'tech'>('blueprint');
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
+  const [docLoading, setDocLoading] = useState(false);
+  const [docLoadingType, setDocLoadingType] = useState<'prd' | 'developer_guide'>('prd');
+
+  const handleGeneratePRD = async () => {
+    setDocLoadingType('prd');
+    setDocLoading(true);
+    setShowDocModal(true);
+    setGeneratedDoc(null);
+    const opportunityData = {
+      ideaName: analysis?.ideaName || idea.title,
+      oneLiner: analysis?.oneLiner || idea.problem,
+      problem: idea.problem,
+      solution: idea.solution,
+      engagement: idea.engagement,
+      validationSignals: idea.validationSignals,
+      scores: analysis?.scores,
+      difficulty: analysis?.difficulty,
+      mvpCost: analysis?.mvpCost,
+      mvpTimeline: analysis?.mvpTimeline,
+      businessModel: analysis?.businessModel,
+      marketIntel: analysis?.marketIntel,
+      executionRoadmap: analysis?.executionRoadmap,
+      techStack: analysis?.techStack,
+      landingPage: analysis?.landingPage
+    };
+    const doc = await generatePRD(opportunityData, 'reddit', analysis?.ideaName || idea.title);
+    setGeneratedDoc(doc);
+    setDocLoading(false);
+  };
+
+  const handleGenerateDevGuide = async () => {
+    setDocLoadingType('developer_guide');
+    setDocLoading(true);
+    setShowDocModal(true);
+    setGeneratedDoc(null);
+    const opportunityData = {
+      ideaName: analysis?.ideaName || idea.title,
+      oneLiner: analysis?.oneLiner || idea.problem,
+      problem: idea.problem,
+      solution: idea.solution,
+      engagement: idea.engagement,
+      validationSignals: idea.validationSignals,
+      scores: analysis?.scores,
+      difficulty: analysis?.difficulty,
+      mvpCost: analysis?.mvpCost,
+      mvpTimeline: analysis?.mvpTimeline,
+      businessModel: analysis?.businessModel,
+      marketIntel: analysis?.marketIntel,
+      executionRoadmap: analysis?.executionRoadmap,
+      techStack: analysis?.techStack,
+      landingPage: analysis?.landingPage
+    };
+    const doc = await generateDeveloperGuide(opportunityData, 'reddit', analysis?.ideaName || idea.title);
+    setGeneratedDoc(doc);
+    setDocLoading(false);
+  };
 
   useEffect(() => {
     if (!analysis && loading) {
@@ -206,11 +265,45 @@ export const RedditIdeaModal: React.FC<RedditIdeaModalProps> = ({ idea, onClose 
                         </div>
                     )}
 
+                    {/* Document Generation Buttons - Always visible when analysis is ready */}
+                    <div className="bg-gradient-to-r from-slate-50 to-orange-50 p-6 rounded-xl border border-slate-200">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <FileText size={16} className="text-orange-500" /> Generate Implementation Documents
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4">
+                            Create comprehensive PRD and Developer Guide to build this product.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleGeneratePRD}
+                                disabled={docLoading}
+                                className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                                <FileText size={16} /> Generate PRD
+                            </button>
+                            <button
+                                onClick={handleGenerateDevGuide}
+                                disabled={docLoading}
+                                className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Code size={16} /> Generate Dev Guide
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             ) : (
                 <div className="text-center text-red-500">Failed to load analysis.</div>
             )}
         </div>
+
+        <DocumentModal
+          isOpen={showDocModal}
+          onClose={() => setShowDocModal(false)}
+          document={generatedDoc}
+          isLoading={docLoading}
+          loadingType={docLoadingType}
+        />
       </div>
     </div>
   );

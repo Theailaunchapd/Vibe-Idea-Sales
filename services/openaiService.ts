@@ -1,4 +1,4 @@
-import { JobListing, JobAnalysis, Business, OpportunityAnalysis, RedditIdea, RedditAnalysis, SocialIdea, SocialAnalysis } from "../types";
+import { JobListing, JobAnalysis, Business, OpportunityAnalysis, RedditIdea, RedditAnalysis, SocialIdea, SocialAnalysis, GeneratedDocument } from "../types";
 
 const API_BASE = '/api';
 
@@ -212,6 +212,55 @@ export const analyzeSocialIdea = async (idea: SocialIdea): Promise<SocialAnalysi
     return await response.json();
   } catch (e) {
     console.error("Failed to analyze social idea", e);
+    return null;
+  }
+};
+
+const safeSerialize = (data: any): any => {
+  try {
+    return JSON.parse(JSON.stringify(data));
+  } catch (e) {
+    console.warn("Serialization failed, returning empty object", e);
+    return {};
+  }
+};
+
+export const generatePRD = async (
+  opportunity: any,
+  sourceType: 'business' | 'social' | 'reddit' | 'job',
+  sourceName: string
+): Promise<GeneratedDocument | null> => {
+  try {
+    const safeOpportunity = safeSerialize(opportunity);
+    const response = await fetch(`${API_BASE}/generate-prd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunity: safeOpportunity, sourceType, sourceName })
+    });
+    if (!response.ok) throw new Error('Failed to generate PRD');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to generate PRD", e);
+    return null;
+  }
+};
+
+export const generateDeveloperGuide = async (
+  opportunity: any,
+  sourceType: 'business' | 'social' | 'reddit' | 'job',
+  sourceName: string
+): Promise<GeneratedDocument | null> => {
+  try {
+    const safeOpportunity = safeSerialize(opportunity);
+    const response = await fetch(`${API_BASE}/generate-developer-guide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunity: safeOpportunity, sourceType, sourceName })
+    });
+    if (!response.ok) throw new Error('Failed to generate Developer Guide');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to generate Developer Guide", e);
     return null;
   }
 };

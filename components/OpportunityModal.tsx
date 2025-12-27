@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Business, OpportunityAnalysis } from '../types';
-import { generateOpportunityBrief } from '../services/openaiService';
+import { Business, OpportunityAnalysis, GeneratedDocument } from '../types';
+import { generateOpportunityBrief, generatePRD, generateDeveloperGuide } from '../services/openaiService';
 import { ScoreBadge } from './ScoreBadge';
-import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart, Bookmark, BookmarkCheck } from 'lucide-react';
+import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart, Bookmark, BookmarkCheck, FileText, Code } from 'lucide-react';
+import DocumentModal from './DocumentModal';
 
 interface OpportunityModalProps {
   business: Business;
@@ -16,6 +17,54 @@ interface OpportunityModalProps {
 export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, onClose, onCreatePitch, onSaveLead, onUnsaveLead, isSaved }) => {
   const [analysis, setAnalysis] = useState<OpportunityAnalysis | null>(business.opportunity || null);
   const [loading, setLoading] = useState(!business.opportunity);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
+  const [docLoading, setDocLoading] = useState(false);
+  const [docLoadingType, setDocLoadingType] = useState<'prd' | 'developer_guide'>('prd');
+
+  const handleGeneratePRD = async () => {
+    setDocLoadingType('prd');
+    setDocLoading(true);
+    setShowDocModal(true);
+    setGeneratedDoc(null);
+    const opportunityData = {
+      businessName: business.name,
+      industry: business.industry,
+      location: business.location,
+      negativeScore: business.negativeScore,
+      painPoints: business.painPoints,
+      reviews: business.reviews,
+      pitchAngle: analysis?.pitchAngle,
+      primaryRecommendation: analysis?.primaryRecommendation,
+      implementationPlan: analysis?.implementationPlan,
+      saasPotential: analysis?.saasPotential
+    };
+    const doc = await generatePRD(opportunityData, 'business', business.name);
+    setGeneratedDoc(doc);
+    setDocLoading(false);
+  };
+
+  const handleGenerateDevGuide = async () => {
+    setDocLoadingType('developer_guide');
+    setDocLoading(true);
+    setShowDocModal(true);
+    setGeneratedDoc(null);
+    const opportunityData = {
+      businessName: business.name,
+      industry: business.industry,
+      location: business.location,
+      negativeScore: business.negativeScore,
+      painPoints: business.painPoints,
+      reviews: business.reviews,
+      pitchAngle: analysis?.pitchAngle,
+      primaryRecommendation: analysis?.primaryRecommendation,
+      implementationPlan: analysis?.implementationPlan,
+      saasPotential: analysis?.saasPotential
+    };
+    const doc = await generateDeveloperGuide(opportunityData, 'business', business.name);
+    setGeneratedDoc(doc);
+    setDocLoading(false);
+  };
 
   useEffect(() => {
     if (!analysis && loading) {
@@ -278,6 +327,32 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
                                 </div>
                             </div>
                             
+                            {/* Document Generation Buttons */}
+                            <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-6 rounded-xl border border-slate-200">
+                                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <FileText size={16} className="text-blue-500" /> Generate Implementation Documents
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    Create comprehensive PRD and Developer Guide to build this AI service.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleGeneratePRD}
+                                        disabled={docLoading}
+                                        className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <FileText size={16} /> Generate PRD
+                                    </button>
+                                    <button
+                                        onClick={handleGenerateDevGuide}
+                                        disabled={docLoading}
+                                        className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Code size={16} /> Generate Dev Guide
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Action Button */}
                             <div className="pt-4">
                                 <button 
@@ -297,6 +372,14 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
                 <div className="text-center text-red-500">Failed to load analysis.</div>
             )}
         </div>
+
+        <DocumentModal
+          isOpen={showDocModal}
+          onClose={() => setShowDocModal(false)}
+          document={generatedDoc}
+          isLoading={docLoading}
+          loadingType={docLoadingType}
+        />
       </div>
     </div>
   );

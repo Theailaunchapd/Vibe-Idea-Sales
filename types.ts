@@ -261,6 +261,19 @@ export interface SocialAnalysis {
   };
 }
 
+// --- Document Generation Types ---
+
+export type DocumentType = 'prd' | 'developer_guide';
+
+export interface GeneratedDocument {
+  type: DocumentType;
+  title: string;
+  content: string;
+  generatedAt: string;
+  sourceType: 'business' | 'social' | 'reddit' | 'job';
+  sourceName: string;
+}
+
 // --- User Profile ---
 
 export interface UserProfile {

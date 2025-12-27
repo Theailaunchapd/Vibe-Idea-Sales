@@ -651,6 +651,250 @@ app.post('/api/scan-social', async (req, res) => {
   }
 });
 
+app.post('/api/generate-prd', async (req, res) => {
+  const { opportunity, sourceType, sourceName } = req.body;
+
+  const prompt = `
+    You are a Senior Product Manager creating a comprehensive Product Requirements Document (PRD).
+    
+    Based on this business opportunity/idea:
+    ${JSON.stringify(opportunity, null, 2)}
+    
+    Source Type: ${sourceType}
+    Source Name: ${sourceName}
+    
+    Generate a COMPLETE, PROFESSIONAL PRD in Markdown format following this structure:
+    
+    # Product Requirements Document (PRD)
+    
+    ## Document Control
+    - Product Name, Version, Date, Author, Status
+    
+    ## 1. Executive Summary
+    - Product Overview (2-3 paragraphs)
+    - Vision Statement
+    - Success Metrics (KPIs, launch target, success criteria)
+    
+    ## 2. Market Analysis
+    - Target Market (primary/secondary audience, demographics, market size)
+    - Market Opportunity (size, growth rate, trends, gaps)
+    - Competitive Analysis (table with competitors, strengths, weaknesses)
+    
+    ## 3. Problem Statement
+    - User Pain Points (3-5 detailed pain points with impact, frequency)
+    - Business Problem
+    
+    ## 4. Product Solution
+    - Value Proposition (For/Who/The/Is a/That/Unlike/Our product statement)
+    - Core Features (5-8 features with descriptions, user stories, priority, complexity)
+    - Feature Prioritization Matrix
+    
+    ## 5. User Personas
+    - 2-3 detailed personas with demographics, goals, pain points, behaviors
+    
+    ## 6. User Workflows & User Stories
+    - Primary workflows with step-by-step flows
+    - User stories organized by epics
+    
+    ## 7. Functional Requirements
+    - System capabilities (user management, core functionality, data management, notifications)
+    - Business rules
+    
+    ## 8. Non-Functional Requirements
+    - Performance, Scalability, Security, Reliability, Compatibility, Usability
+    
+    ## 9. UX Requirements
+    - Design principles, branding guidelines, UI components
+    
+    ## 10. Revenue Model & Monetization
+    - Revenue streams, pricing tiers, financial projections, CAC/LTV
+    
+    ## 11. Go-to-Market Strategy
+    - Launch phases, marketing channels, sales strategy
+    
+    ## 12. Product Roadmap
+    - MVP features, V1.1, V1.2, V2.0 plans
+    
+    ## 13. Success Criteria & KPIs
+    - Launch metrics, 6-month and 12-month goals
+    
+    ## 14. Risks & Mitigations
+    - Technical, business, and market risks with mitigation strategies
+    
+    ## 15. Timeline & Milestones
+    - Development timeline, key milestones
+    
+    Make the PRD specific to the opportunity provided. Use realistic estimates, actual market data where possible, and make it immediately actionable for a development team.
+    Return ONLY the markdown content, no JSON wrapper.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 8000
+    });
+
+    let text = response.choices[0]?.message?.content || '';
+    if (text.startsWith('```markdown')) text = text.replace(/^```markdown\n?/, '').replace(/```$/, '');
+    else if (text.startsWith('```')) text = text.replace(/^```\n?/, '').replace(/```$/, '');
+    
+    res.json({
+      type: 'prd',
+      title: `PRD - ${sourceName}`,
+      content: text.trim(),
+      generatedAt: new Date().toISOString(),
+      sourceType,
+      sourceName
+    });
+  } catch (e) {
+    console.error("Failed to generate PRD", e);
+    res.status(500).json({ error: "Failed to generate PRD" });
+  }
+});
+
+app.post('/api/generate-developer-guide', async (req, res) => {
+  const { opportunity, sourceType, sourceName } = req.body;
+
+  const prompt = `
+    You are a Senior Software Architect creating a comprehensive Developer Guide & Technical Specification.
+    
+    Based on this business opportunity/idea:
+    ${JSON.stringify(opportunity, null, 2)}
+    
+    Source Type: ${sourceType}
+    Source Name: ${sourceName}
+    
+    Generate a COMPLETE, PROFESSIONAL Developer Guide in Markdown format following this structure:
+    
+    # Developer Guide & Technical Specification
+    
+    ## Document Control
+    - Product Name, Version, Date, Lead Architect, Status
+    
+    ## 1. System Overview
+    - Product Description
+    - System Architecture Diagram (use ASCII art)
+    - Key Components (Frontend, Backend, Database, Cache, etc.)
+    - Technical Requirements (scalability, performance, availability)
+    
+    ## 2. Architecture
+    - Overall Architecture Pattern (with rationale)
+    - System Components detailed breakdown (Frontend, API Gateway, Application, Data, Background Jobs layers)
+    - Data Flow Diagram
+    - Scalability Strategy
+    
+    ## 3. Technology Stack
+    - Frontend (framework, language, build tools, UI libraries, state management, testing)
+    - Backend (runtime, framework, database, ORM, cache, auth, queues)
+    - DevOps & Infrastructure (cloud, containers, CI/CD, monitoring)
+    - Development Tools (version control, code quality, IDEs)
+    
+    ## 4. Development Environment Setup
+    - Prerequisites (required software versions)
+    - Initial Setup (clone, install, env vars with examples)
+    - Database Setup commands
+    - Start Development Servers commands
+    - Verification steps
+    
+    ## 5. Database Schema
+    - Design Philosophy
+    - ERD diagram (ASCII art)
+    - Detailed Table Schemas with SQL CREATE statements for:
+      - users, sessions, and core business tables
+    - Indexes Strategy
+    - Migration commands
+    
+    ## 6. API Specifications
+    - API Overview (base URLs, versioning)
+    - Authentication Flow
+    - Detailed Endpoints with:
+      - Request/Response JSON examples
+      - Validation rules
+      - Error responses
+    
+    ## 7. Frontend Architecture
+    - Component hierarchy
+    - State management approach
+    - Routing structure
+    - Key components breakdown
+    
+    ## 8. Backend Architecture
+    - Service layer design
+    - Repository pattern
+    - Middleware chain
+    - Error handling strategy
+    
+    ## 9. Authentication & Authorization
+    - Auth flow diagrams
+    - JWT structure
+    - Role-based access control
+    - OAuth integration
+    
+    ## 10. Security
+    - Data encryption
+    - Input validation
+    - Rate limiting
+    - Security headers
+    
+    ## 11. Testing Strategy
+    - Unit tests (examples)
+    - Integration tests
+    - E2E tests
+    - Coverage requirements
+    
+    ## 12. Deployment & DevOps
+    - CI/CD pipeline
+    - Environment configurations
+    - Docker setup
+    - Kubernetes/scaling
+    
+    ## 13. Monitoring & Logging
+    - Logging strategy
+    - APM setup
+    - Alerting rules
+    - Dashboard metrics
+    
+    ## 14. Error Handling
+    - Error codes
+    - Exception handling patterns
+    - User-facing error messages
+    
+    ## 15. Code Standards
+    - Naming conventions
+    - File structure
+    - Code review checklist
+    - Git workflow
+    
+    Make everything specific to the opportunity. Include actual code examples, SQL schemas, and architecture diagrams.
+    Return ONLY the markdown content, no JSON wrapper.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 8000
+    });
+
+    let text = response.choices[0]?.message?.content || '';
+    if (text.startsWith('```markdown')) text = text.replace(/^```markdown\n?/, '').replace(/```$/, '');
+    else if (text.startsWith('```')) text = text.replace(/^```\n?/, '').replace(/```$/, '');
+    
+    res.json({
+      type: 'developer_guide',
+      title: `Developer Guide - ${sourceName}`,
+      content: text.trim(),
+      generatedAt: new Date().toISOString(),
+      sourceType,
+      sourceName
+    });
+  } catch (e) {
+    console.error("Failed to generate Developer Guide", e);
+    res.status(500).json({ error: "Failed to generate Developer Guide" });
+  }
+});
+
 app.post('/api/analyze-social-idea', async (req, res) => {
   const { idea } = req.body;
 
