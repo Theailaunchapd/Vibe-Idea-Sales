@@ -81,19 +81,29 @@ app.post('/api/search-businesses', async (req, res) => {
 
   const prompt = `
     You are an AI Business Opportunity Analyzer.
-    Task: Identify 10-15 struggling businesses in the "${industry}" industry in "${location}" that are likely hiring for operational roles.
+    Task: Identify EXACTLY 100 UNIQUE struggling businesses in the "${industry}" industry in "${location}" that are likely hiring for operational roles.
+    
+    CRITICAL REQUIREMENTS:
+    - Generate EXACTLY 100 businesses
+    - Each business MUST be completely unique (different names, addresses, characteristics)
+    - Vary business names creatively - use different naming patterns, owner names, locations within ${location}
+    - Distribute businesses across different neighborhoods/areas in ${location}
+    - Vary negative scores between 60-95
+    - Create diverse pain points and review patterns
+    - Use realistic but varied contact information
     
     For each business, simulate analysis of their online presence:
-    1. Calculate a "Negative Score" (0-100)
-    2. Identify specific Pain Points.
-    3. Extract Contact Info
-    4. Include 2 representative "Negative Reviews" snippets.
+    1. Calculate a "Negative Score" (60-95)
+    2. Identify 2-4 specific Pain Points
+    3. Generate realistic Contact Info
+    4. Include 2-3 representative "Negative Reviews" snippets
+    5. Assign realistic hiring roles
 
     Return JSON with structure:
     {
       "businesses": [
         {
-          "id": "unique_string",
+          "id": "unique_string_with_timestamp",
           "name": "Business Name",
           "industry": "${industry}",
           "location": "${location}",
@@ -108,7 +118,7 @@ app.post('/api/search-businesses', async (req, res) => {
           },
           "activeHiringRole": "string",
           "painPoints": [
-            { "title": "string", "impactLevel": "High/Medium", "description": "string", "frequency": "string" }
+            { "title": "string", "impactLevel": "High/Medium/Low", "description": "string", "frequency": "string" }
           ],
           "websiteUrl": "string",
           "contactPhone": "string",
@@ -119,6 +129,8 @@ app.post('/api/search-businesses', async (req, res) => {
         }
       ]
     }
+    
+    Remember: Create exactly 100 unique, diverse businesses. No duplicates.
   `;
 
   try {
@@ -131,7 +143,16 @@ app.post('/api/search-businesses', async (req, res) => {
     const text = response.choices[0]?.message?.content;
     if (text) {
       const parsed = JSON.parse(cleanJson(text));
-      res.json(Array.isArray(parsed) ? parsed : parsed.businesses || []);
+      const businesses = Array.isArray(parsed) ? parsed : parsed.businesses || [];
+      
+      // Add timestamp to IDs to ensure uniqueness across queries
+      const timestamp = Date.now();
+      const uniqueBusinesses = businesses.map((biz: any, index: number) => ({
+        ...biz,
+        id: `${industry.toLowerCase().replace(/\s+/g, '-')}-${location.toLowerCase().replace(/\s+/g, '-')}-${timestamp}-${index}`
+      }));
+      
+      res.json(uniqueBusinesses);
     } else {
       res.json([]);
     }

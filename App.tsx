@@ -3,6 +3,8 @@ import { Business, CrmLead, JobListing, RedditIdea, UserProfile } from './types'
 import { searchJobs, searchBusinessOpportunities, scanRedditIdeas } from './services/openaiService';
 import { JobCard } from './components/JobCard';
 import { BusinessCard } from './components/BusinessCard';
+import { BusinessListView } from './components/BusinessListView';
+import { Pagination } from './components/Pagination';
 import { RedditIdeaCard } from './components/RedditIdeaCard';
 import { JobModal } from './components/JobModal';
 import { OpportunityModal } from './components/OpportunityModal';
@@ -60,6 +62,10 @@ const App: React.FC = () => {
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [redditIdeas, setRedditIdeas] = useState<RedditIdea[]>([]);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
   
   // Selection State
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
@@ -138,6 +144,7 @@ const App: React.FC = () => {
     setJobs([]);
     setBusinesses([]);
     setRedditIdeas([]);
+    setCurrentPage(1); // Reset to first page on new search
 
     try {
       if (searchMode === 'jobs') {
@@ -387,20 +394,25 @@ const App: React.FC = () => {
         )}
 
         {searchMode === 'businesses' && businesses.length > 0 && (
-             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex justify-between items-center px-2">
                     <h3 className="font-semibold text-gray-700">Identified {businesses.length} Struggling Businesses</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {businesses.map((biz) => (
-                        <BusinessCard 
-                            key={biz.id}
-                            business={biz}
-                            onClick={() => setSelectedBusiness(biz)}
-                        />
-                    ))}
-                </div>
+                <BusinessListView 
+                  businesses={businesses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
+                  onBusinessClick={setSelectedBusiness}
+                />
+                
+                {businesses.length > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(businesses.length / itemsPerPage)}
+                    totalItems={businesses.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
             </div>
         )}
 
