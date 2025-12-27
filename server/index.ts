@@ -1,10 +1,31 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import OpenAI from 'openai';
+import authRoutes from './routes/auth';
+import { securityHeaders } from './middleware/security';
+import { apiRateLimiter } from './middleware/rateLimiter';
 
 const app = express();
-app.use(cors());
+
+// Security middleware
+app.use(securityHeaders);
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.APP_URL || 'http://localhost:5000',
+  credentials: true
+}));
+
+// Body parsers
 app.use(express.json());
+app.use(cookieParser());
+
+// Rate limiting for API endpoints
+app.use('/api', apiRateLimiter);
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
