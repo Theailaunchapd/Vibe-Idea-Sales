@@ -1,15 +1,27 @@
 import React from 'react';
 import { Business } from '../types';
 import { ScoreBadge } from './ScoreBadge';
-import { Briefcase, MapPin, AlertCircle, Star } from 'lucide-react';
+import { Briefcase, MapPin, AlertCircle, Star, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface BusinessCardProps {
   business: Business;
   onClick: () => void;
+  isSaved?: boolean;
+  onSave?: (business: Business) => void;
+  onUnsave?: (businessId: string) => void;
 }
 
-export const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick }) => {
+export const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick, isSaved, onSave, onUnsave }) => {
   const topPainPoint = business.painPoints[0];
+
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSaved) {
+      onUnsave?.(business.id);
+    } else {
+      onSave?.(business);
+    }
+  };
 
   return (
     <div 
@@ -29,7 +41,22 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ business, onClick })
             )}
           </div>
         </div>
-        <ScoreBadge score={business.negativeScore} />
+        <div className="flex items-center gap-2">
+          <ScoreBadge score={business.negativeScore} />
+          {(onSave || onUnsave) && (
+            <button
+              onClick={handleSaveClick}
+              className={`p-2 rounded-lg transition-all ${
+                isSaved
+                  ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={isSaved ? 'Saved to CRM' : 'Save to CRM'}
+            >
+              {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3 relative z-10">
