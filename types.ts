@@ -196,6 +196,71 @@ export interface LandingPageSpec {
   colorPalette: string[];
 }
 
+// --- Social/Twitter Scout Types ---
+
+export interface SocialIdea {
+  id: string;
+  sourceUrl: string;
+  author: string;
+  authorHandle: string;
+  title: string;
+  description: string;
+  engagement: {
+    likes: number;
+    retweets: number;
+    replies: number;
+    views?: number;
+    sentiment: 'positive' | 'mixed' | 'negative';
+  };
+  extractionDate: string;
+  hashtags: string[];
+  category: 'startup' | 'saas' | 'problem' | 'wish' | 'general';
+  analysis?: SocialAnalysis;
+}
+
+export interface SocialAnalysis {
+  ideaName: string;
+  oneLiner: string;
+  aiServiceOpportunity: {
+    serviceName: string;
+    description: string;
+    valueProposition: string;
+    targetAudience: string;
+    pricingModel: string[];
+  };
+  scores: {
+    viralPotential: number;
+    marketDemand: number;
+    technicalFeasibility: number;
+    aiReadiness: number;
+    composite: number;
+  };
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  mvpCost: string;
+  mvpTimeline: string;
+  implementationPlan: {
+    phase1: string[];
+    phase2: string[];
+    phase3: string[];
+  };
+  techStack: {
+    frontend: string;
+    backend: string;
+    ai: string;
+    database: string;
+  };
+  marketIntelligence?: {
+    competitors: { name: string; weakness: string }[];
+    differentiators: string[];
+    marketSize: string;
+  };
+  monetizationStrategy: {
+    revenueModel: string;
+    pricing: string;
+    ltv: string;
+  };
+}
+
 // --- User Profile ---
 
 export interface UserProfile {

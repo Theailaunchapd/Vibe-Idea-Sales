@@ -1,23 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Business, CrmLead, JobListing, RedditIdea, UserProfile } from './types';
-import { searchJobs, searchBusinessOpportunities, scanRedditIdeas } from './services/openaiService';
+import { Business, CrmLead, JobListing, RedditIdea, SocialIdea, UserProfile } from './types';
+import { searchJobs, searchBusinessOpportunities, scanRedditIdeas, scanSocialIdeas } from './services/openaiService';
 import { JobCard } from './components/JobCard';
 import { BusinessCard } from './components/BusinessCard';
 import { BusinessListView } from './components/BusinessListView';
 import { Pagination } from './components/Pagination';
 import { RedditIdeaCard } from './components/RedditIdeaCard';
+import { SocialIdeaCard } from './components/SocialIdeaCard';
 import { JobModal } from './components/JobModal';
 import { OpportunityModal } from './components/OpportunityModal';
 import { RedditIdeaModal } from './components/RedditIdeaModal';
+import { SocialIdeaModal } from './components/SocialIdeaModal';
 import { Vib3Hub } from './components/Vib3Hub';
 import { LandingPage } from './components/LandingPage';
 import { ProfileCreation } from './components/ProfileCreation';
 import { ProfileDashboard } from './components/ProfileDashboard';
-import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin } from 'lucide-react';
+import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin, Twitter } from 'lucide-react';
 import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness } from './services/crmStorage';
 
 type ViewState = 'landing' | 'profile' | 'dashboard' | 'vib3hub';
-type SearchMode = 'jobs' | 'businesses' | 'reddit';
+type SearchMode = 'jobs' | 'businesses' | 'reddit' | 'social';
 
 const App: React.FC = () => {
   const [appView, setAppView] = useState<ViewState | 'account'>('landing');
@@ -62,6 +64,7 @@ const App: React.FC = () => {
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [redditIdeas, setRedditIdeas] = useState<RedditIdea[]>([]);
+  const [socialIdeas, setSocialIdeas] = useState<SocialIdea[]>([]);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,6 +74,7 @@ const App: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [selectedRedditIdea, setSelectedRedditIdea] = useState<RedditIdea | null>(null);
+  const [selectedSocialIdea, setSelectedSocialIdea] = useState<SocialIdea | null>(null);
   
   // Vib3 Hub State (Active Item)
   const [activeHubItem, setActiveHubItem] = useState<JobListing | Business | null>(null);
@@ -138,12 +142,13 @@ const App: React.FC = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query && searchMode !== 'reddit') return; // Reddit search can have default
+    if (!query && searchMode !== 'reddit' && searchMode !== 'social') return; // Reddit and Social search can have defaults
 
     setLoading(true);
     setJobs([]);
     setBusinesses([]);
     setRedditIdeas([]);
+    setSocialIdeas([]);
     setCurrentPage(1); // Reset to first page on new search
 
     try {
@@ -154,11 +159,15 @@ const App: React.FC = () => {
           // For businesses, query is the Industry
           const results = await searchBusinessOpportunities(query, location);
           setBusinesses(results);
-      } else {
+      } else if (searchMode === 'reddit') {
           // Reddit Search
           // Query can be "subreddit" or "topic" - let's treat query as Topic, location as Subreddit (optional)
           const results = await scanRedditIdeas(location, query); // Swapped for UX: Location input acts as Subreddit
           setRedditIdeas(results);
+      } else {
+          // Social Search
+          const results = await scanSocialIdeas(query || 'business ideas, startup ideas, things I wish existed');
+          setSocialIdeas(results);
       }
     } catch (error) {
       console.error(error);
@@ -247,23 +256,29 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-4">
               <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto">
-                  <button 
+                  <button
                     onClick={() => setSearchMode('jobs')}
                     className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${searchMode === 'jobs' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                   >
                       Job Market
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSearchMode('businesses')}
                     className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${searchMode === 'businesses' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                   >
                       Business Leads
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSearchMode('reddit')}
                     className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap flex items-center gap-1 ${searchMode === 'reddit' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                   >
-                      <Flame size={12} className={searchMode === 'reddit' ? 'text-orange-500' : ''} /> Trend Ideas
+                      <Flame size={12} className={searchMode === 'reddit' ? 'text-orange-500' : ''} /> Trends
+                  </button>
+                  <button
+                    onClick={() => setSearchMode('social')}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap flex items-center gap-1 ${searchMode === 'social' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                  >
+                      <Twitter size={12} className={searchMode === 'social' ? 'text-blue-500' : ''} /> Social
                   </button>
               </div>
 
@@ -313,63 +328,73 @@ const App: React.FC = () => {
             {searchMode === 'reddit' && (
                 <>Scout <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500">Viral Trends</span> on Reddit</>
             )}
+            {searchMode === 'social' && (
+                <>Find <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Business Ideas</span> on X.com</>
+            )}
           </h2>
           <p className="text-gray-500 mb-8 text-lg font-light">
             {searchMode === 'jobs' && `Welcome Agent ${userProfile?.name.split(' ')[0] || ''}. Search jobs to discover automation opportunities.`}
             {searchMode === 'businesses' && `Welcome Agent ${userProfile?.name.split(' ')[0] || ''}. Identify businesses with operational pain points.`}
             {searchMode === 'reddit' && `Welcome Agent ${userProfile?.name.split(' ')[0] || ''}. Discover high-potential business ideas.`}
+            {searchMode === 'social' && `Welcome Agent ${userProfile?.name.split(' ')[0] || ''}. Scan X.com for startup ideas and AI service opportunities.`}
           </p>
 
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 bg-white p-2 rounded-2xl border border-gray-200 shadow-xl shadow-gray-200/50 relative overflow-hidden">
              <div className={`absolute inset-0 bg-gradient-to-r pointer-events-none opacity-20 ${
-                 searchMode === 'jobs' ? 'from-blue-50 to-purple-50' : 
-                 searchMode === 'businesses' ? 'from-orange-50 to-red-50' : 
-                 'from-orange-100 to-yellow-50'
+                 searchMode === 'jobs' ? 'from-blue-50 to-purple-50' :
+                 searchMode === 'businesses' ? 'from-orange-50 to-red-50' :
+                 searchMode === 'reddit' ? 'from-orange-100 to-yellow-50' :
+                 'from-blue-100 to-cyan-50'
              }`} />
-            
+
             <div className="flex-1 relative">
               <div className="absolute left-4 top-3.5 text-gray-400">
                   {searchMode === 'jobs' && <Briefcase className="w-5 h-5" />}
                   {searchMode === 'businesses' && <Building2 className="w-5 h-5" />}
                   {searchMode === 'reddit' && <Flame className="w-5 h-5" />}
+                  {searchMode === 'social' && <Twitter className="w-5 h-5" />}
               </div>
               <input
                 type="text"
                 placeholder={
-                    searchMode === 'jobs' ? "Job Title (e.g. Receptionist)" : 
+                    searchMode === 'jobs' ? "Job Title (e.g. Receptionist)" :
                     searchMode === 'businesses' ? "Industry (e.g. Dentists)" :
-                    "Topic (e.g. SaaS Ideas)"
+                    searchMode === 'reddit' ? "Topic (e.g. SaaS Ideas)" :
+                    "Search topic (e.g. AI tools, startup ideas)"
                 }
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full bg-transparent border-none py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none"
               />
             </div>
-             <div className="w-px bg-gray-200 hidden sm:block my-2"></div>
-            <div className="flex-1 relative">
-              <MapPin className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder={
-                    searchMode === 'jobs' ? "Location (e.g. New York)" : 
-                    searchMode === 'businesses' ? "Location (e.g. New York)" :
-                    "Subreddit (Optional, e.g. startup_ideas)"
-                }
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-transparent border-none py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none"
-              />
-            </div>
+             {searchMode !== 'social' && <div className="w-px bg-gray-200 hidden sm:block my-2"></div>}
+            {searchMode !== 'social' && (
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder={
+                      searchMode === 'jobs' ? "Location (e.g. New York)" :
+                      searchMode === 'businesses' ? "Location (e.g. New York)" :
+                      "Subreddit (Optional, e.g. startup_ideas)"
+                  }
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full bg-transparent border-none py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none"
+                />
+              </div>
+            )}
             <button
               type="submit"
-              disabled={loading || (searchMode !== 'reddit' && (!query || !location))}
+              disabled={loading || (searchMode === 'jobs' && (!query || !location)) || (searchMode === 'businesses' && (!query || !location))}
               className={`text-white px-8 py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${
-                  searchMode === 'jobs' ? 'bg-black hover:bg-gray-800' : 
+                  searchMode === 'jobs' ? 'bg-black hover:bg-gray-800' :
                   searchMode === 'businesses' ? 'bg-orange-600 hover:bg-orange-500' :
-                  'bg-orange-500 hover:bg-orange-400'
+                  searchMode === 'reddit' ? 'bg-orange-500 hover:bg-orange-400' :
+                  'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (searchMode === 'reddit' ? 'Scout' : 'Search')}
+              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (searchMode === 'reddit' || searchMode === 'social' ? 'Scout' : 'Search')}
             </button>
           </form>
         </section>
@@ -421,10 +446,10 @@ const App: React.FC = () => {
                 <div className="flex justify-between items-center px-2">
                     <h3 className="font-semibold text-gray-700">Scouted {redditIdeas.length} Viral Ideas</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {redditIdeas.map((idea) => (
-                        <RedditIdeaCard 
+                        <RedditIdeaCard
                             key={idea.id}
                             idea={idea}
                             onClick={() => setSelectedRedditIdea(idea)}
@@ -434,18 +459,38 @@ const App: React.FC = () => {
             </div>
         )}
 
-        {!loading && jobs.length === 0 && businesses.length === 0 && redditIdeas.length === 0 && (
+        {searchMode === 'social' && socialIdeas.length > 0 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex justify-between items-center px-2">
+                    <h3 className="font-semibold text-gray-700">Found {socialIdeas.length} Business Ideas on X.com</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {socialIdeas.map((idea) => (
+                        <SocialIdeaCard
+                            key={idea.id}
+                            idea={idea}
+                            onClick={() => setSelectedSocialIdea(idea)}
+                        />
+                    ))}
+                </div>
+            </div>
+        )}
+
+        {!loading && jobs.length === 0 && businesses.length === 0 && redditIdeas.length === 0 && socialIdeas.length === 0 && (
             <div className="mt-20 text-center text-gray-400">
                 <div className="inline-block p-4 rounded-full bg-white border border-gray-100 mb-4 shadow-sm">
-                    {searchMode === 'jobs' ? <Briefcase size={32} className="opacity-20 text-black" /> : 
+                    {searchMode === 'jobs' ? <Briefcase size={32} className="opacity-20 text-black" /> :
                      searchMode === 'businesses' ? <Building2 size={32} className="opacity-20 text-black" /> :
-                     <Flame size={32} className="opacity-20 text-black" />
+                     searchMode === 'reddit' ? <Flame size={32} className="opacity-20 text-black" /> :
+                     <Twitter size={32} className="opacity-20 text-black" />
                     }
                 </div>
                 <p>Start searching to analyze {
-                    searchMode === 'jobs' ? 'the job market' : 
+                    searchMode === 'jobs' ? 'the job market' :
                     searchMode === 'businesses' ? 'local businesses' :
-                    'Reddit trends'
+                    searchMode === 'reddit' ? 'Reddit trends' :
+                    'social media for ideas'
                 }.</p>
             </div>
         )}
@@ -475,6 +520,13 @@ const App: React.FC = () => {
           <RedditIdeaModal
             idea={selectedRedditIdea}
             onClose={() => setSelectedRedditIdea(null)}
+          />
+      )}
+
+      {selectedSocialIdea && (
+          <SocialIdeaModal
+            idea={selectedSocialIdea}
+            onClose={() => setSelectedSocialIdea(null)}
           />
       )}
     </div>

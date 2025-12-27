@@ -563,6 +563,157 @@ app.post('/api/generate-workflow-demo', async (req, res) => {
   }
 });
 
+app.post('/api/scan-social', async (req, res) => {
+  const { topic } = req.body;
+
+  const prompt = `
+    You are the VIB3 Social Media Scout for X.com (Twitter).
+    Task: Scan X.com for posts related to "${topic || 'business ideas, startup ideas, things I wish existed'}".
+
+    Focus on finding posts that mention:
+    - Startup ideas or business opportunities
+    - "I wish there was..." or "Someone should build..."
+    - Problems that need solving
+    - Pain points in existing services
+    - Suggestions for new AI-powered services
+    - Entrepreneurial discussions
+
+    Generate 20-25 realistic X.com posts that represent business opportunities.
+    Each post should feel authentic and include realistic engagement metrics.
+
+    Return JSON:
+    {
+      "ideas": [
+        {
+          "id": "VIB3-X-[unique-id]",
+          "sourceUrl": "https://x.com/[username]/status/[id]",
+          "author": "Full Name",
+          "authorHandle": "@username",
+          "title": "Short title summarizing the idea (max 60 chars)",
+          "description": "The full post text (concise, twitter-style)",
+          "engagement": {
+            "likes": number,
+            "retweets": number,
+            "replies": number,
+            "views": number,
+            "sentiment": "positive/mixed/negative"
+          },
+          "extractionDate": "ISO date",
+          "hashtags": ["#tag1", "#tag2"],
+          "category": "startup|saas|problem|wish|general"
+        }
+      ]
+    }
+
+    Make the posts feel authentic - vary engagement levels, include realistic hashtags,
+    and ensure diverse perspectives on business ideas that could be turned into AI services.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      const parsed = JSON.parse(cleanJson(text));
+      res.json(Array.isArray(parsed) ? parsed : parsed.ideas || []);
+    } else {
+      res.json([]);
+    }
+  } catch (e) {
+    console.error("Failed to scan social media", e);
+    res.status(500).json({ error: "Failed to scan social media" });
+  }
+});
+
+app.post('/api/analyze-social-idea', async (req, res) => {
+  const { idea } = req.body;
+
+  const prompt = `
+    You are the VIB3 AI Service Architect.
+    Task: Analyze this X.com post and create a comprehensive AI service business plan.
+
+    Post Details:
+    - Author: ${idea.author} (@${idea.authorHandle})
+    - Content: ${idea.description}
+    - Engagement: ${idea.engagement.likes} likes, ${idea.engagement.retweets} retweets
+
+    Your job is to:
+    1. Extract the core business idea from this social post
+    2. Design how to turn it into an AI-powered service
+    3. Create a complete implementation roadmap
+    4. Provide market intelligence and monetization strategy
+
+    Return JSON with this EXACT structure:
+    {
+      "ideaName": "AI Service Name",
+      "oneLiner": "One sentence value proposition",
+      "aiServiceOpportunity": {
+        "serviceName": "Name of the AI Service",
+        "description": "Detailed description (2-3 sentences)",
+        "valueProposition": "Why this AI service solves the problem better",
+        "targetAudience": "Who would pay for this",
+        "pricingModel": ["Subscription $X/mo", "Pay-per-use $Y/action", "Enterprise $Z/year"]
+      },
+      "scores": {
+        "viralPotential": number 0-100,
+        "marketDemand": number 0-100,
+        "technicalFeasibility": number 0-100,
+        "aiReadiness": number 0-100,
+        "composite": number 0-100 (average of above)
+      },
+      "difficulty": "Beginner|Intermediate|Advanced|Expert",
+      "mvpCost": "Estimated cost string",
+      "mvpTimeline": "Timeline string",
+      "implementationPlan": {
+        "phase1": ["Step 1", "Step 2", "Step 3"],
+        "phase2": ["Step 1", "Step 2", "Step 3"],
+        "phase3": ["Step 1", "Step 2", "Step 3"]
+      },
+      "techStack": {
+        "frontend": "Technology recommendation",
+        "backend": "Technology recommendation",
+        "ai": "AI/ML tools needed",
+        "database": "Database recommendation"
+      },
+      "marketIntelligence": {
+        "competitors": [{"name": "Competitor", "weakness": "Their weakness"}],
+        "differentiators": ["Unique advantage 1", "Unique advantage 2"],
+        "marketSize": "Estimated market size"
+      },
+      "monetizationStrategy": {
+        "revenueModel": "Primary revenue model",
+        "pricing": "Recommended pricing",
+        "ltv": "Estimated customer lifetime value"
+      }
+    }
+
+    Focus on making this a viable AI service that could be built and monetized.
+    Be specific about the AI components and how they create value.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      res.json(JSON.parse(cleanJson(text)));
+    } else {
+      res.status(500).json({ error: "No response" });
+    }
+  } catch (e) {
+    console.error("Failed to analyze social idea", e);
+    res.status(500).json({ error: "Failed to analyze social idea" });
+  }
+});
+
 const PORT = 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API server running on port ${PORT}`);
