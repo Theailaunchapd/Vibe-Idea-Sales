@@ -1,14 +1,27 @@
 import React from 'react';
 import { Business } from '../types';
 import { ScoreBadge } from './ScoreBadge';
-import { Briefcase, MapPin, AlertCircle, Phone, Mail, Globe, Star, ChevronRight } from 'lucide-react';
+import { Briefcase, MapPin, AlertCircle, Phone, Mail, Globe, Star, ChevronRight, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface BusinessListViewProps {
   businesses: Business[];
   onBusinessClick: (business: Business) => void;
+  savedBusinessIds?: Set<string>;
+  onSave?: (business: Business) => void;
+  onUnsave?: (businessId: string) => void;
 }
 
-export const BusinessListView: React.FC<BusinessListViewProps> = ({ businesses, onBusinessClick }) => {
+export const BusinessListView: React.FC<BusinessListViewProps> = ({ businesses, onBusinessClick, savedBusinessIds, onSave, onUnsave }) => {
+  const handleSaveClick = (e: React.MouseEvent, business: Business) => {
+    e.stopPropagation();
+    const isSaved = savedBusinessIds?.has(business.id);
+    if (isSaved) {
+      onUnsave?.(business.id);
+    } else {
+      onSave?.(business);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
@@ -25,6 +38,7 @@ export const BusinessListView: React.FC<BusinessListViewProps> = ({ businesses, 
       <div className="divide-y divide-gray-100">
         {businesses.map((business) => {
           const topPainPoint = business.painPoints[0];
+          const isSaved = savedBusinessIds?.has(business.id);
           
           return (
             <div
@@ -103,7 +117,20 @@ export const BusinessListView: React.FC<BusinessListViewProps> = ({ businesses, 
               </div>
 
               {/* Action */}
-              <div className="col-span-1 flex items-center justify-end">
+              <div className="col-span-1 flex items-center justify-end gap-2">
+                {(onSave || onUnsave) && (
+                  <button
+                    onClick={(e) => handleSaveClick(e, business)}
+                    className={`p-2 rounded-lg transition-all ${
+                      isSaved
+                        ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title={isSaved ? 'Saved to CRM' : 'Save to CRM'}
+                  >
+                    {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                  </button>
+                )}
                 <ChevronRight size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
               </div>
             </div>

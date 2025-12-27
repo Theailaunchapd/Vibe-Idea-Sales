@@ -402,6 +402,9 @@ const App: React.FC = () => {
                 <BusinessListView 
                   businesses={businesses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
                   onBusinessClick={setSelectedBusiness}
+                  savedBusinessIds={crmBusinessIdSet}
+                  onSave={saveBusinessLead}
+                  onUnsave={unsaveBusinessLead}
                 />
                 
                 {businesses.length > itemsPerPage && (

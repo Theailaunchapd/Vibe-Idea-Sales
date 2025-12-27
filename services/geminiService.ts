@@ -203,7 +203,7 @@ export const searchBusinessOpportunities = async (
     // Simulating Phase 1 & 2: Search Jobs -> Extract Companies -> Analyze Reviews -> Score
     const prompt = `
       You are an AI Business Opportunity Analyzer.
-      Task: Identify 10-15 struggling businesses in the "${industry}" industry in "${location}" that are likely hiring for operational roles (Receptionist, Customer Service, Admin).
+      Task: Identify 100 struggling businesses in the "${industry}" industry in "${location}" that are likely hiring for operational roles (Receptionist, Customer Service, Admin).
       
       For each business, simulate a deep analysis of their online presence (Google/Yelp Reviews, Website):
       1. Calculate a "Negative Score" (0-100) based on:
