@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { JobListing, Business, RedditIdea, UserProfile } from './types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Business, CrmLead, JobListing, RedditIdea, UserProfile } from './types';
 import { searchJobs, searchBusinessOpportunities, scanRedditIdeas } from './services/openaiService';
 import { JobCard } from './components/JobCard';
 import { BusinessCard } from './components/BusinessCard';
@@ -10,13 +10,15 @@ import { RedditIdeaModal } from './components/RedditIdeaModal';
 import { Vib3Hub } from './components/Vib3Hub';
 import { LandingPage } from './components/LandingPage';
 import { ProfileCreation } from './components/ProfileCreation';
-import { Search, Loader2, Sparkles, MapPin, Briefcase, Building2, Flame, User } from 'lucide-react';
+import { ProfileDashboard } from './components/ProfileDashboard';
+import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin } from 'lucide-react';
+import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness } from './services/crmStorage';
 
 type ViewState = 'landing' | 'profile' | 'dashboard' | 'vib3hub';
 type SearchMode = 'jobs' | 'businesses' | 'reddit';
 
 const App: React.FC = () => {
-  const [appView, setAppView] = useState<ViewState>('landing');
+  const [appView, setAppView] = useState<ViewState | 'account'>('landing');
   const [searchMode, setSearchMode] = useState<SearchMode>('jobs');
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
@@ -26,11 +28,33 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem('vib3_user');
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return ensureUserId(parsed);
     } catch (e) {
       return null;
     }
   });
+
+  // Saved Leads CRM (per-user)
+  const userId = userProfile?.id || null;
+  const [crmLeads, setCrmLeads] = useState<CrmLead[]>(() => (userId ? loadCrmLeads(userId) : []));
+
+  useEffect(() => {
+    if (!userId) {
+      setCrmLeads([]);
+      return;
+    }
+    setCrmLeads(loadCrmLeads(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      saveCrmLeads(userId, crmLeads);
+    } catch {
+      // ignore
+    }
+  }, [userId, crmLeads]);
 
   // Data State
   const [jobs, setJobs] = useState<JobListing[]>([]);
@@ -54,9 +78,56 @@ const App: React.FC = () => {
   };
 
   const handleProfileComplete = (profile: UserProfile) => {
-      localStorage.setItem('vib3_user', JSON.stringify(profile));
-      setUserProfile(profile);
+      const ensured = ensureUserId(profile) || profile;
+      localStorage.setItem('vib3_user', JSON.stringify(ensured));
+      setUserProfile(ensured);
       setAppView('dashboard');
+  };
+
+  const crmBusinessIdSet = useMemo(() => new Set(crmLeads.map((l) => l.businessId)), [crmLeads]);
+
+  const saveBusinessLead = (business: Business) => {
+    if (!userId) return;
+    setCrmLeads((prev) => {
+      const existing = prev.find((l) => l.businessId === business.id);
+      if (existing) {
+        return prev.map((l) => (l.id === existing.id ? mergeLead(l, { business }) : l));
+      }
+      return [upsertLeadFromBusiness({ ownerUserId: userId, business }), ...prev];
+    });
+  };
+
+  const unsaveBusinessLead = (businessId: string) => {
+    if (!userId) return;
+    setCrmLeads((prev) => prev.filter((l) => l.businessId !== businessId));
+  };
+
+  const updateCrmLead = (leadId: string, patch: Partial<CrmLead>) => {
+    if (!userId) return;
+    setCrmLeads((prev) => prev.map((l) => (l.id === leadId ? mergeLead(l, patch) : l)));
+  };
+
+  const deleteCrmLead = (leadId: string) => {
+    if (!userId) return;
+    setCrmLeads((prev) => prev.filter((l) => l.id !== leadId));
+  };
+
+  const updateUserProfile = (patch: Partial<UserProfile>) => {
+    if (!userProfile) return;
+    const updated: UserProfile = ensureUserId({ ...userProfile, ...patch }) || { ...userProfile, ...patch };
+    try {
+      localStorage.setItem('vib3_user', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    setUserProfile(updated);
+  };
+
+  const handleSignOut = () => {
+    clearUserProfile();
+    setUserProfile(null);
+    setCrmLeads([]);
+    setAppView('landing');
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -130,6 +201,20 @@ const App: React.FC = () => {
       return <ProfileCreation onComplete={handleProfileComplete} onBack={() => setAppView('landing')} />;
   }
 
+  if (appView === 'account' && userProfile) {
+      return (
+        <ProfileDashboard
+          profile={userProfile}
+          leads={crmLeads}
+          onBack={() => setAppView('dashboard')}
+          onUpdateProfile={updateUserProfile}
+          onSignOut={handleSignOut}
+          onUpdateLead={updateCrmLead}
+          onDeleteLead={deleteCrmLead}
+        />
+      );
+  }
+
   if (appView === 'vib3hub' && activeHubItem) {
       return (
           <Vib3Hub 
@@ -177,15 +262,32 @@ const App: React.FC = () => {
 
               {/* User Profile Mini Display */}
               {userProfile && (
-                  <div className="hidden md:flex items-center gap-2 pl-4 border-l border-gray-200">
-                      <div className="text-right hidden lg:block">
-                          <div className="text-xs font-bold text-gray-900">{userProfile.name}</div>
-                          <div className="text-[10px] text-gray-500 uppercase font-medium">{userProfile.role}</div>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                          {userProfile.avatarInitial}
-                      </div>
-                  </div>
+                  <>
+                      {/* Mobile */}
+                      <button
+                        onClick={() => setAppView('account')}
+                        className="md:hidden w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                        aria-label="Open profile"
+                      >
+                        {userProfile.avatarInitial}
+                      </button>
+
+                      {/* Desktop */}
+                      <button
+                        onClick={() => setAppView('account')}
+                        className="hidden md:flex items-center gap-2 pl-4 border-l border-gray-200 hover:bg-gray-50 rounded-xl pr-2 py-1 transition-colors"
+                        aria-label="Open profile"
+                      >
+                          <div className="text-right hidden lg:block">
+                              <div className="text-xs font-bold text-gray-900">{userProfile.name}</div>
+                              <div className="text-[10px] text-gray-500 uppercase font-medium">{userProfile.role}</div>
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                              {userProfile.avatarInitial}
+                          </div>
+                          <ChevronDown size={14} className="text-gray-400" />
+                      </button>
+                  </>
               )}
           </div>
         </div>
@@ -351,6 +453,9 @@ const App: React.FC = () => {
             business={selectedBusiness}
             onClose={() => setSelectedBusiness(null)}
             onCreatePitch={() => handleOpenVib3Hub(selectedBusiness)}
+            isSaved={crmBusinessIdSet.has(selectedBusiness.id)}
+            onSaveLead={saveBusinessLead}
+            onUnsaveLead={unsaveBusinessLead}
           />
       )}
 
