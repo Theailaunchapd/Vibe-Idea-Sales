@@ -152,15 +152,8 @@ const App: React.FC = () => {
   const [activeHubItem, setActiveHubItem] = useState<JobListing | Business | null>(null);
 
   const handleGetStarted = () => {
-      if (authenticatedUser) {
-          setAppView('dashboard');
-      } else if (userProfile) {
-          // Old user with localStorage profile
-          setAppView('dashboard');
-      } else {
-          // New user - send to login
-          setAppView('login');
-      }
+      // Go directly to dashboard without requiring login
+      setAppView('dashboard');
   };
 
   const handleProfileComplete = (profile: UserProfile) => {
