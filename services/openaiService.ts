@@ -4,13 +4,14 @@ const API_BASE = '/api';
 
 export const searchJobs = async (
   query: string,
-  location: string
+  location: string,
+  radius: number = 25
 ): Promise<JobListing[]> => {
   try {
     const response = await fetch(`${API_BASE}/search-jobs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, location })
+      body: JSON.stringify({ query, location, radius })
     });
     if (!response.ok) throw new Error('Failed to search jobs');
     return await response.json();
@@ -37,13 +38,14 @@ export const analyzeJobDeepDive = async (job: JobListing): Promise<JobAnalysis |
 
 export const searchBusinessOpportunities = async (
   industry: string,
-  location: string
+  location: string,
+  radius: number = 25
 ): Promise<Business[]> => {
   try {
     const response = await fetch(`${API_BASE}/search-businesses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ industry, location })
+      body: JSON.stringify({ industry, location, radius })
     });
     if (!response.ok) throw new Error('Failed to search businesses');
     return await response.json();

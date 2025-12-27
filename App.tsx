@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [searchMode, setSearchMode] = useState<SearchMode>('jobs');
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
+  const [radius, setRadius] = useState<number>(25);
   const [loading, setLoading] = useState(false);
   
   // User Profile State (with persistence)
@@ -153,11 +154,11 @@ const App: React.FC = () => {
 
     try {
       if (searchMode === 'jobs') {
-          const results = await searchJobs(query, location);
+          const results = await searchJobs(query, location, radius);
           setJobs(results);
       } else if (searchMode === 'businesses') {
           // For businesses, query is the Industry
-          const results = await searchBusinessOpportunities(query, location);
+          const results = await searchBusinessOpportunities(query, location, radius);
           setBusinesses(results);
       } else if (searchMode === 'reddit') {
           // Reddit Search
@@ -383,6 +384,24 @@ const App: React.FC = () => {
                   className="w-full bg-transparent border-none py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none"
                 />
               </div>
+            )}
+            {/* Radius selector for jobs and businesses */}
+            {(searchMode === 'jobs' || searchMode === 'businesses') && (
+              <>
+                <div className="w-px bg-gray-200 hidden sm:block my-2"></div>
+                <div className="flex-none relative min-w-[140px]">
+                  <select
+                    value={radius}
+                    onChange={(e) => setRadius(Number(e.target.value))}
+                    className="w-full bg-transparent border-none py-3 px-4 text-gray-900 focus:ring-0 focus:outline-none cursor-pointer appearance-none pr-8"
+                  >
+                    <option value={25}>Within 25 miles</option>
+                    <option value={50}>Within 50 miles</option>
+                    <option value={100}>Within 100 miles</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+              </>
             )}
             <button
               type="submit"
