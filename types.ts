@@ -202,5 +202,7 @@ export interface UserProfile {
   name: string;
   role: string;
   focus: string[];
+  services: string[];
+  topics: string[];
   avatarInitial?: string;
 }
