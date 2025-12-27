@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { User, Briefcase, Zap, ArrowRight, Sparkles, ChevronLeft, Check, ShieldCheck } from 'lucide-react';
+import { User, Briefcase, Zap, ArrowRight, Sparkles, ChevronLeft, Check, ShieldCheck, Layers, Target } from 'lucide-react';
 
 interface ProfileCreationProps {
   onComplete: (profile: UserProfile) => void;
@@ -12,16 +11,20 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [selectedFocus, setSelectedFocus] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const focusOptions = ['SaaS Automation', 'Agency Growth', 'Lead Gen', 'Content AI', 'B2B Sales', 'No-Code Tools'];
+  const serviceOptions = ['Web Design', 'AI Automation', 'SEO', 'Content Marketing', 'Email Campaigns', 'Custom Dev'];
+  const topicOptions = ['Real Estate', 'Healthcare', 'E-commerce', 'Local Business', 'SaaS', 'Finance'];
 
-  const toggleFocus = (option: string) => {
-    if (selectedFocus.includes(option)) {
-      setSelectedFocus(selectedFocus.filter(f => f !== option));
+  const toggleSelection = (option: string, current: string[], setter: (val: string[]) => void, max: number = 3) => {
+    if (current.includes(option)) {
+      setter(current.filter(f => f !== option));
     } else {
-      if (selectedFocus.length < 3) {
-        setSelectedFocus([...selectedFocus, option]);
+      if (current.length < max) {
+        setter([...current, option]);
       }
     }
   };
@@ -36,11 +39,15 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
             name, 
             role, 
             focus: selectedFocus,
+            services: selectedServices,
+            topics: selectedTopics,
             avatarInitial: name.charAt(0).toUpperCase()
         });
       }, 1500);
     }
   };
+
+  const isFormValid = name && role && selectedFocus.length > 0 && selectedServices.length > 0 && selectedTopics.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -50,7 +57,7 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
           <div className="absolute top-[40%] right-[0%] w-[40%] h-[40%] bg-purple-100 rounded-full blur-3xl opacity-50" />
       </div>
 
-      <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-gray-100 p-8 relative z-10 animate-in fade-in zoom-in-95 duration-500">
+      <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-gray-100 p-8 relative z-10 animate-in fade-in zoom-in-95 duration-500 my-8">
         
         <button 
             onClick={onBack}
@@ -97,7 +104,7 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
 
             <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
-                    <Zap size={14} className="text-yellow-500" /> Focus Areas (Max 3)
+                    <Zap size={14} className="text-yellow-500" /> Key Strategies (Max 3)
                 </label>
                 <div className="flex flex-wrap gap-2">
                     {focusOptions.map(option => {
@@ -106,7 +113,7 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
                             <button
                                 key={option}
                                 type="button"
-                                onClick={() => toggleFocus(option)}
+                                onClick={() => toggleSelection(option, selectedFocus, setSelectedFocus)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                                     isSelected 
                                     ? 'bg-black text-white border-black shadow-md' 
@@ -120,11 +127,61 @@ export const ProfileCreation: React.FC<ProfileCreationProps> = ({ onComplete, on
                 </div>
             </div>
 
+            <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+                    <Layers size={14} className="text-blue-500" /> Services You Offer (Max 3)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    {serviceOptions.map(option => {
+                        const isSelected = selectedServices.includes(option);
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => toggleSelection(option, selectedServices, setSelectedServices)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                    isSelected 
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+                    <Target size={14} className="text-purple-500" /> Target Industries (Max 3)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    {topicOptions.map(option => {
+                        const isSelected = selectedTopics.includes(option);
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => toggleSelection(option, selectedTopics, setSelectedTopics)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                    isSelected 
+                                    ? 'bg-purple-600 text-white border-purple-600 shadow-md' 
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             <button 
                 type="submit"
-                disabled={!name || !role || selectedFocus.length === 0 || isSubmitting}
+                disabled={!isFormValid || isSubmitting}
                 className={`w-full py-4 rounded-xl font-bold text-white shadow-xl flex items-center justify-center gap-2 transition-all ${
-                    !name || !role || selectedFocus.length === 0 
+                    !isFormValid 
                     ? 'bg-gray-300 cursor-not-allowed' 
                     : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/25 hover:scale-[1.02] active:scale-95'
                 }`}
