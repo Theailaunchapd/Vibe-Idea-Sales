@@ -22,7 +22,7 @@ import ForgotPasswordPage from './components/ForgotPasswordPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin, Twitter } from 'lucide-react';
-import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness, upsertLeadFromSocial } from './services/crmStorage';
+import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness, upsertLeadFromSocial, upsertLeadFromJob } from './services/crmStorage';
 import { TokenStorage, getCurrentUser, logout as authLogout, setupTokenRefresh, clearTokenRefresh, type SafeUser } from './services/authService';
 
 type ViewState = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verify-email' | 'profile' | 'dashboard' | 'vib3hub';
@@ -207,6 +207,7 @@ const App: React.FC = () => {
 
   const crmBusinessIdSet = useMemo(() => new Set(crmLeads.filter(l => l.businessId).map((l) => l.businessId)), [crmLeads]);
   const crmSocialIdSet = useMemo(() => new Set(crmLeads.filter(l => l.socialId).map((l) => l.socialId)), [crmLeads]);
+  const crmJobIdSet = useMemo(() => new Set(crmLeads.filter(l => l.jobId).map((l) => l.jobId)), [crmLeads]);
 
   const saveBusinessLead = (business: Business) => {
     if (!userId) return;
@@ -238,6 +239,22 @@ const App: React.FC = () => {
   const unsaveSocialLead = (socialId: string) => {
     if (!userId) return;
     setCrmLeads((prev) => prev.filter((l) => l.socialId !== socialId));
+  };
+
+  const saveJobLead = (job: JobListing) => {
+    if (!userId) return;
+    setCrmLeads((prev) => {
+      const existing = prev.find((l) => l.jobId === job.id);
+      if (existing) {
+        return prev.map((l) => (l.id === existing.id ? mergeLead(l, { job }) : l));
+      }
+      return [upsertLeadFromJob({ ownerUserId: userId, job }), ...prev];
+    });
+  };
+
+  const unsaveJobLead = (jobId: string) => {
+    if (!userId) return;
+    setCrmLeads((prev) => prev.filter((l) => l.jobId !== jobId));
   };
 
   const updateCrmLead = (leadId: string, patch: Partial<CrmLead>) => {
@@ -638,6 +655,9 @@ const App: React.FC = () => {
              <JobListView
                jobs={jobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
                onJobClick={setSelectedJob}
+               savedJobIds={crmJobIdSet}
+               onSave={saveJobLead}
+               onUnsave={unsaveJobLead}
              />
 
              {jobs.length > itemsPerPage && (
@@ -762,6 +782,9 @@ const App: React.FC = () => {
           job={selectedJob}
           onClose={() => setSelectedJob(null)}
           onCreateVib3Pitch={() => handleOpenVib3Hub(selectedJob)}
+          isSaved={crmJobIdSet.has(selectedJob.id)}
+          onSaveLead={saveJobLead}
+          onUnsaveLead={unsaveJobLead}
         />
       )}
 

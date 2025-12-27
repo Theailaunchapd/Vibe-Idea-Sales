@@ -1,13 +1,16 @@
 import React from 'react';
 import { JobListing } from '../types';
-import { Briefcase, MapPin, DollarSign, Clock, ChevronRight, ExternalLink } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Clock, ChevronRight, ExternalLink, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface JobListViewProps {
   jobs: JobListing[];
   onJobClick: (job: JobListing) => void;
+  savedJobIds?: Set<string | undefined>;
+  onSave?: (job: JobListing) => void;
+  onUnsave?: (jobId: string) => void;
 }
 
-export const JobListView: React.FC<JobListViewProps> = ({ jobs, onJobClick }) => {
+export const JobListView: React.FC<JobListViewProps> = ({ jobs, onJobClick, savedJobIds, onSave, onUnsave }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
@@ -17,7 +20,7 @@ export const JobListView: React.FC<JobListViewProps> = ({ jobs, onJobClick }) =>
         <div className="col-span-2">Salary</div>
         <div className="col-span-2">Posted</div>
         <div className="col-span-1">AI Score</div>
-        <div className="col-span-1"></div>
+        <div className="col-span-1">Save</div>
       </div>
 
       {/* Rows */}
@@ -83,9 +86,28 @@ export const JobListView: React.FC<JobListViewProps> = ({ jobs, onJobClick }) =>
                 </div>
               </div>
 
-              {/* Action Arrow */}
-              <div className="col-span-1 flex items-center justify-end">
-                <ChevronRight size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+              {/* Save Button */}
+              <div className="col-span-1 flex items-center justify-center">
+                {(onSave || onUnsave) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (savedJobIds?.has(job.id)) {
+                        onUnsave?.(job.id);
+                      } else {
+                        onSave?.(job);
+                      }
+                    }}
+                    className={`p-1.5 rounded-lg transition-all ${
+                      savedJobIds?.has(job.id)
+                        ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title={savedJobIds?.has(job.id) ? 'Saved to CRM' : 'Save to CRM'}
+                  >
+                    {savedJobIds?.has(job.id) ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                  </button>
+                )}
               </div>
             </div>
           );

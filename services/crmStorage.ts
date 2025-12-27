@@ -1,4 +1,4 @@
-import type { Business, CrmLead, LeadPriority, LeadStatus, SocialIdea, UserProfile } from '../types';
+import type { Business, CrmLead, JobListing, LeadPriority, LeadStatus, SocialIdea, UserProfile } from '../types';
 
 const USER_KEY = 'vib3_user';
 
@@ -120,11 +120,38 @@ export function upsertLeadFromSocial(opts: {
   };
 }
 
+export function upsertLeadFromJob(opts: {
+  ownerUserId: string;
+  job: JobListing;
+  status?: LeadStatus;
+  priority?: LeadPriority;
+}): CrmLead {
+  const status: LeadStatus = opts.status || 'New';
+  const priority: LeadPriority = opts.priority || 'Medium';
+  const createdAt = nowIso();
+
+  return {
+    id: `lead_job_${opts.job.id}_${Math.random().toString(16).slice(2, 10)}`,
+    ownerUserId: opts.ownerUserId,
+    source: 'job',
+    jobId: opts.job.id,
+    job: opts.job,
+    status,
+    priority,
+    tags: [],
+    notes: '',
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
 export function mergeLead(existing: CrmLead, patch: Partial<CrmLead>): CrmLead {
   return {
     ...existing,
     ...patch,
     business: patch.business ?? existing.business,
+    socialIdea: patch.socialIdea ?? existing.socialIdea,
+    job: patch.job ?? existing.job,
     tags: patch.tags ?? existing.tags,
     updatedAt: nowIso(),
   };

@@ -1,13 +1,24 @@
 import React from 'react';
 import { JobListing } from '../types';
-import { Building2, MapPin, Clock, DollarSign, Sparkles, ExternalLink } from 'lucide-react';
+import { Building2, MapPin, Clock, DollarSign, Sparkles, ExternalLink, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface JobCardProps {
   job: JobListing;
   onClick: () => void;
+  isSaved?: boolean;
+  onSave?: (job: JobListing) => void;
+  onUnsave?: (jobId: string) => void;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
+export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isSaved, onSave, onUnsave }) => {
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSaved) {
+      onUnsave?.(job.id);
+    } else {
+      onSave?.(job);
+    }
+  };
   const score = job.aiPotentialScore || 50;
   let scoreColor = 'bg-gray-100 text-gray-600';
   if (score > 75) scoreColor = 'bg-green-100 text-green-700 border-green-200';
@@ -34,9 +45,24 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
              <Building2 size={14} className="mr-1.5 text-gray-400" /> {job.company}
           </p>
         </div>
-        <div className={`px-2 py-1 rounded-lg text-xs font-bold border ${scoreColor} flex flex-col items-center min-w-[50px]`}>
-            <span>{score}%</span>
-            <span className="text-[9px] uppercase font-normal opacity-80">AI Pot.</span>
+        <div className="flex items-start gap-2">
+          <div className={`px-2 py-1 rounded-lg text-xs font-bold border ${scoreColor} flex flex-col items-center min-w-[50px]`}>
+              <span>{score}%</span>
+              <span className="text-[9px] uppercase font-normal opacity-80">AI Pot.</span>
+          </div>
+          {(onSave || onUnsave) && (
+            <button
+              onClick={handleSaveClick}
+              className={`p-1.5 rounded-lg transition-all ${
+                isSaved
+                  ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={isSaved ? 'Saved to CRM' : 'Save to CRM'}
+            >
+              {isSaved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+            </button>
+          )}
         </div>
       </div>
 

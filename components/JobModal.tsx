@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { JobListing, JobAnalysis } from '../types';
 import { analyzeJobDeepDive } from '../services/openaiService';
-import { X, Briefcase, Bot, Hammer, Loader2, CheckCircle2, ChevronRight, Zap, ArrowRight, DollarSign, Clock, LayoutGrid, Sparkles, Server, ExternalLink, TrendingUp, Target } from 'lucide-react';
+import { X, Briefcase, Bot, Hammer, Loader2, CheckCircle2, ChevronRight, Zap, ArrowRight, DollarSign, Clock, LayoutGrid, Sparkles, Server, ExternalLink, TrendingUp, Target, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface JobModalProps {
   job: JobListing;
   onClose: () => void;
   onCreateVib3Pitch: () => void;
+  isSaved?: boolean;
+  onSaveLead?: (job: JobListing) => void;
+  onUnsaveLead?: (jobId: string) => void;
 }
 
 type Tab = 'job-ops' | 'jb-workflows' | 'implementation';
 
-export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pitch }) => {
+export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pitch, isSaved, onSaveLead, onUnsaveLead }) => {
   const [activeTab, setActiveTab] = useState<Tab>('job-ops');
   const [analysis, setAnalysis] = useState<JobAnalysis | null>(job.analysis || null);
   const [loading, setLoading] = useState(!job.analysis);
@@ -62,9 +65,27 @@ export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pi
               </a>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 transition-colors">
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {(onSaveLead || onUnsaveLead) && (
+              <button
+                onClick={() => {
+                  if (isSaved) onUnsaveLead?.(job.id);
+                  else onSaveLead?.(job);
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  isSaved
+                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                {isSaved ? 'Saved to CRM' : 'Save to CRM'}
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 transition-colors">
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
