@@ -1,26 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { Business, OpportunityAnalysis, GeneratedDocument } from '../types';
-import { generateOpportunityBrief, generatePRD, generateDeveloperGuide } from '../services/openaiService';
+import { generateOpportunityBrief, generatePRD, generateDeveloperGuide, generateVibePitch, VibePitch } from '../services/openaiService';
 import { ScoreBadge } from './ScoreBadge';
-import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart, Bookmark, BookmarkCheck, FileText, Code } from 'lucide-react';
+import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart, Bookmark, BookmarkCheck, FileText, Code, MessageSquare } from 'lucide-react';
 import DocumentModal from './DocumentModal';
+import PitchModal from './PitchModal';
 
 interface OpportunityModalProps {
   business: Business;
   onClose: () => void;
-  onCreatePitch: () => void;
   onSaveLead?: (business: Business) => void;
   onUnsaveLead?: (businessId: string) => void;
   isSaved?: boolean;
 }
 
-export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, onClose, onCreatePitch, onSaveLead, onUnsaveLead, isSaved }) => {
+export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, onClose, onSaveLead, onUnsaveLead, isSaved }) => {
   const [analysis, setAnalysis] = useState<OpportunityAnalysis | null>(business.opportunity || null);
   const [loading, setLoading] = useState(!business.opportunity);
   const [showDocModal, setShowDocModal] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [docLoading, setDocLoading] = useState(false);
   const [docLoadingType, setDocLoadingType] = useState<'prd' | 'developer_guide'>('prd');
+  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [vibePitch, setVibePitch] = useState<VibePitch | null>(null);
+  const [pitchLoading, setPitchLoading] = useState(false);
 
   const handleGeneratePRD = async () => {
     setDocLoadingType('prd');
@@ -64,6 +67,27 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
     const doc = await generateDeveloperGuide(opportunityData, 'business', business.name);
     setGeneratedDoc(doc);
     setDocLoading(false);
+  };
+
+  const handleGenerateVibePitch = async () => {
+    setPitchLoading(true);
+    setShowPitchModal(true);
+    setVibePitch(null);
+    const opportunityData = {
+      businessName: business.name,
+      industry: business.industry,
+      location: business.location,
+      negativeScore: business.negativeScore,
+      painPoints: business.painPoints,
+      reviews: business.reviews,
+      pitchAngle: analysis?.pitchAngle,
+      primaryRecommendation: analysis?.primaryRecommendation,
+      implementationPlan: analysis?.implementationPlan,
+      saasPotential: analysis?.saasPotential
+    };
+    const pitch = await generateVibePitch(opportunityData);
+    setVibePitch(pitch);
+    setPitchLoading(false);
   };
 
   useEffect(() => {
@@ -356,13 +380,14 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
                             {/* Action Button */}
                             <div className="pt-4">
                                 <button 
-                                    onClick={onCreatePitch}
-                                    className="w-full py-4 bg-black hover:bg-gray-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 group"
+                                    onClick={handleGenerateVibePitch}
+                                    disabled={pitchLoading}
+                                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:from-orange-300 disabled:to-pink-300 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 group"
                                 >
-                                    <Zap className="fill-white" /> Launch Vib3 Hub & Create Pitch <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                    <MessageSquare className="fill-white" /> Vibe Pitch <ArrowRight className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <p className="text-center text-gray-400 text-xs mt-3">
-                                    Generates sales email, website mockup, and demo script instantly.
+                                    Generate a converting pitch email and phone script to reach out to this business.
                                 </p>
                             </div>
                         </div>
@@ -379,6 +404,13 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
           document={generatedDoc}
           isLoading={docLoading}
           loadingType={docLoadingType}
+        />
+
+        <PitchModal
+          isOpen={showPitchModal}
+          onClose={() => setShowPitchModal(false)}
+          pitch={vibePitch}
+          isLoading={pitchLoading}
         />
       </div>
     </div>

@@ -720,7 +720,6 @@ const App: React.FC = () => {
           <OpportunityModal 
             business={selectedBusiness}
             onClose={() => setSelectedBusiness(null)}
-            onCreatePitch={() => handleOpenVib3Hub(selectedBusiness)}
             isSaved={crmBusinessIdSet.has(selectedBusiness.id)}
             onSaveLead={saveBusinessLead}
             onUnsaveLead={unsaveBusinessLead}

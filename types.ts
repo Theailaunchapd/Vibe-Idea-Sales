@@ -274,6 +274,22 @@ export interface GeneratedDocument {
   sourceName: string;
 }
 
+export interface VibePitch {
+  businessName: string;
+  email: {
+    subject: string;
+    body: string;
+  };
+  phoneScript: {
+    opening: string;
+    valueProposition: string;
+    painPointAddress: string;
+    callToAction: string;
+    objectionHandlers: { objection: string; response: string }[];
+  };
+  generatedAt: string;
+}
+
 // --- User Profile ---
 
 export interface UserProfile {

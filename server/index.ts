@@ -895,6 +895,72 @@ app.post('/api/generate-developer-guide', async (req, res) => {
   }
 });
 
+app.post('/api/generate-vibe-pitch', async (req, res) => {
+  const { opportunity } = req.body;
+
+  const prompt = `
+    You are an elite B2B sales copywriter and cold outreach expert.
+    Task: Create a high-converting pitch email and phone script for an AI services agency reaching out to a business.
+
+    Business Details:
+    - Business Name: ${opportunity.businessName || 'Target Business'}
+    - Industry: ${opportunity.industry || 'Unknown'}
+    - Location: ${opportunity.location || 'Unknown'}
+    - Pain Points: ${JSON.stringify(opportunity.painPoints || [])}
+    - Recommended Solution: ${opportunity.primaryRecommendation || opportunity.pitchAngle || 'AI automation solution'}
+    - Implementation Plan: ${JSON.stringify(opportunity.implementationPlan || {})}
+
+    Create a COMPELLING pitch that:
+    1. Opens with a pattern interrupt that grabs attention
+    2. References their specific pain points (from reviews/data)
+    3. Positions your AI solution as the obvious fix
+    4. Uses social proof and urgency
+    5. Has a clear, low-friction call to action
+
+    Return JSON with this EXACT structure:
+    {
+      "email": {
+        "subject": "Compelling subject line (max 50 chars, creates curiosity)",
+        "body": "Full email body with personalization tokens. Use short paragraphs. Include specific numbers/results. End with soft CTA."
+      },
+      "phoneScript": {
+        "opening": "First 10 seconds - pattern interrupt and permission to continue",
+        "valueProposition": "30-second pitch connecting their pain to your solution",
+        "painPointAddress": "How to bring up their specific pain points naturally",
+        "callToAction": "Soft close for next step (meeting, demo, etc)",
+        "objectionHandlers": [
+          {"objection": "We're too busy", "response": "Response to this objection"},
+          {"objection": "We already have something", "response": "Response to this objection"},
+          {"objection": "Send me an email", "response": "Response to this objection"},
+          {"objection": "Not interested", "response": "Response to this objection"}
+        ]
+      }
+    }
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 3000
+    });
+
+    const text = response.choices[0]?.message?.content || '{}';
+    const cleaned = cleanJson(text);
+    const parsed = JSON.parse(cleaned);
+
+    res.json({
+      businessName: opportunity.businessName || 'Target Business',
+      email: parsed.email,
+      phoneScript: parsed.phoneScript,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error("Failed to generate Vibe Pitch", e);
+    res.status(500).json({ error: "Failed to generate Vibe Pitch" });
+  }
+});
+
 app.post('/api/analyze-social-idea', async (req, res) => {
   const { idea } = req.body;
 

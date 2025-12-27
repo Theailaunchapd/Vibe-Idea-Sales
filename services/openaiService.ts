@@ -264,3 +264,35 @@ export const generateDeveloperGuide = async (
     return null;
   }
 };
+
+export interface VibePitch {
+  businessName: string;
+  email: {
+    subject: string;
+    body: string;
+  };
+  phoneScript: {
+    opening: string;
+    valueProposition: string;
+    painPointAddress: string;
+    callToAction: string;
+    objectionHandlers: { objection: string; response: string }[];
+  };
+  generatedAt: string;
+}
+
+export const generateVibePitch = async (opportunity: any): Promise<VibePitch | null> => {
+  try {
+    const safeOpportunity = safeSerialize(opportunity);
+    const response = await fetch(`${API_BASE}/generate-vibe-pitch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunity: safeOpportunity })
+    });
+    if (!response.ok) throw new Error('Failed to generate Vibe Pitch');
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to generate Vibe Pitch", e);
+    return null;
+  }
+};
