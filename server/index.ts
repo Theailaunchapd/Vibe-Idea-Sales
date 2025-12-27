@@ -47,7 +47,7 @@ app.post('/api/search-jobs', async (req, res) => {
   
   const prompt = `
     You are a Job Market Intelligence Agent.
-    Task: Search for 15-20 realistic job postings for "${query}" in "${location}" within a ${radius}-mile radius.
+    Task: Search for exactly 50 realistic job postings for "${query}" in "${location}" within a ${radius}-mile radius.
     
     For each job, extract or simulate realistic details found on major job boards (Indeed, LinkedIn, etc.):
     1. Job Title & Company Name.
@@ -191,8 +191,8 @@ app.post('/api/scan-reddit', async (req, res) => {
     You are the VIB3 Reddit Scout.
     Task: Scan Reddit for posts in r/${subreddit || 'Startup_Ideas'} related to "${topic || 'saas idea'}".
     Target posts that signal high-potential business opportunities.
-    
-    Generate 20-25 "Raw Idea Cards" in JSON.
+
+    Generate exactly 50 "Raw Idea Cards" in JSON.
     Keep descriptions ultra-concise.
     
     Return JSON:
@@ -600,7 +600,7 @@ app.post('/api/scan-social', async (req, res) => {
     - Suggestions for new AI-powered services
     - Entrepreneurial discussions
 
-    Generate 20-25 realistic X.com posts that represent business opportunities.
+    Generate exactly 50 realistic X.com posts that represent business opportunities.
     Each post should feel authentic and include realistic engagement metrics.
 
     Return JSON:
