@@ -15,10 +15,16 @@ import { Vib3Hub } from './components/Vib3Hub';
 import { LandingPage } from './components/LandingPage';
 import { ProfileCreation } from './components/ProfileCreation';
 import { ProfileDashboard } from './components/ProfileDashboard';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
+import VerifyEmailPage from './components/VerifyEmailPage';
 import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin, Twitter } from 'lucide-react';
 import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness } from './services/crmStorage';
+import { TokenStorage, getCurrentUser, logout as authLogout, setupTokenRefresh, clearTokenRefresh, type SafeUser } from './services/authService';
 
-type ViewState = 'landing' | 'profile' | 'dashboard' | 'vib3hub';
+type ViewState = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verify-email' | 'profile' | 'dashboard' | 'vib3hub';
 type SearchMode = 'jobs' | 'businesses' | 'reddit' | 'social';
 
 const App: React.FC = () => {
@@ -27,8 +33,15 @@ const App: React.FC = () => {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  // User Profile State (with persistence)
+  const [authLoading, setAuthLoading] = useState(true);
+  const [resetToken, setResetToken] = useState<string>('');
+  const [verificationToken, setVerificationToken] = useState<string>('');
+
+  // Authentication State
+  const [authenticatedUser, setAuthenticatedUser] = useState<SafeUser | null>(null);
+  const [requiresVerification, setRequiresVerification] = useState(false);
+
+  // User Profile State (with persistence) - for backward compatibility with existing localStorage data
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem('vib3_user');
@@ -39,8 +52,65 @@ const App: React.FC = () => {
     }
   });
 
-  // Saved Leads CRM (per-user)
-  const userId = userProfile?.id || null;
+  // Check for existing authentication session on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check URL for reset/verification tokens
+        const urlParams = new URLSearchParams(window.location.search);
+        const resetTokenParam = urlParams.get('token');
+        const action = urlParams.get('action');
+
+        if (resetTokenParam && action === 'reset-password') {
+          setResetToken(resetTokenParam);
+          setAppView('reset-password');
+          setAuthLoading(false);
+          return;
+        }
+
+        if (resetTokenParam && action === 'verify-email') {
+          setVerificationToken(resetTokenParam);
+          setAppView('verify-email');
+          setAuthLoading(false);
+          return;
+        }
+
+        // Check for existing session
+        if (TokenStorage.hasValidToken()) {
+          const user = await getCurrentUser();
+          setAuthenticatedUser(user);
+          setRequiresVerification(!user.emailVerified);
+          setupTokenRefresh();
+
+          // If user is authenticated, go to dashboard
+          if (appView === 'landing') {
+            setAppView('dashboard');
+          }
+        } else {
+          // No valid token, check if there's old localStorage profile
+          if (userProfile) {
+            // Keep them on dashboard with old profile for backward compatibility
+            setAppView('dashboard');
+          }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        TokenStorage.clearTokens();
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Cleanup token refresh on unmount
+    return () => {
+      clearTokenRefresh();
+    };
+  }, []);
+
+  // Saved Leads CRM (per-user) - use authenticated user ID if available, otherwise fall back to old profile ID
+  const userId = authenticatedUser?.id || userProfile?.id || null;
   const [crmLeads, setCrmLeads] = useState<CrmLead[]>(() => (userId ? loadCrmLeads(userId) : []));
 
   useEffect(() => {
@@ -80,10 +150,14 @@ const App: React.FC = () => {
   const [activeHubItem, setActiveHubItem] = useState<JobListing | Business | null>(null);
 
   const handleGetStarted = () => {
-      if (userProfile) {
+      if (authenticatedUser) {
+          setAppView('dashboard');
+      } else if (userProfile) {
+          // Old user with localStorage profile
           setAppView('dashboard');
       } else {
-          setAppView('profile');
+          // New user - send to login
+          setAppView('login');
       }
   };
 
@@ -92,6 +166,38 @@ const App: React.FC = () => {
       localStorage.setItem('vib3_user', JSON.stringify(ensured));
       setUserProfile(ensured);
       setAppView('dashboard');
+  };
+
+  // Authentication Handlers
+  const handleLoginSuccess = (user: SafeUser, needsVerification: boolean) => {
+    setAuthenticatedUser(user);
+    setRequiresVerification(needsVerification);
+    setupTokenRefresh();
+
+    if (needsVerification) {
+      setAppView('verify-email');
+    } else {
+      setAppView('dashboard');
+    }
+  };
+
+  const handleSignupSuccess = (user: SafeUser, needsVerification: boolean) => {
+    setAuthenticatedUser(user);
+    setRequiresVerification(needsVerification);
+    setupTokenRefresh();
+
+    // Always show verification page after signup
+    setAppView('verify-email');
+  };
+
+  const handleVerificationSuccess = () => {
+    setRequiresVerification(false);
+    setAppView('dashboard');
+  };
+
+  const handleResetPasswordSuccess = () => {
+    setResetToken('');
+    setAppView('login');
   };
 
   const crmBusinessIdSet = useMemo(() => new Set(crmLeads.map((l) => l.businessId)), [crmLeads]);
@@ -133,7 +239,16 @@ const App: React.FC = () => {
     setUserProfile(updated);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await authLogout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    clearTokenRefresh();
+    setAuthenticatedUser(null);
+    setRequiresVerification(false);
     clearUserProfile();
     setUserProfile(null);
     setCrmLeads([]);
@@ -209,6 +324,67 @@ const App: React.FC = () => {
   };
 
   // ROUTING VIEWS
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication Views
+  if (appView === 'login') {
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateToSignup={() => setAppView('signup')}
+        onNavigateToForgotPassword={() => setAppView('forgot-password')}
+      />
+    );
+  }
+
+  if (appView === 'signup') {
+    return (
+      <SignupPage
+        onSignupSuccess={handleSignupSuccess}
+        onNavigateToLogin={() => setAppView('login')}
+      />
+    );
+  }
+
+  if (appView === 'forgot-password') {
+    return (
+      <ForgotPasswordPage
+        onNavigateToLogin={() => setAppView('login')}
+      />
+    );
+  }
+
+  if (appView === 'reset-password') {
+    return (
+      <ResetPasswordPage
+        token={resetToken}
+        onResetSuccess={handleResetPasswordSuccess}
+        onNavigateToLogin={() => setAppView('login')}
+      />
+    );
+  }
+
+  if (appView === 'verify-email') {
+    return (
+      <VerifyEmailPage
+        token={verificationToken}
+        userEmail={authenticatedUser?.email}
+        onVerificationSuccess={handleVerificationSuccess}
+        onNavigateToDashboard={() => setAppView('dashboard')}
+      />
+    );
+  }
+
   if (appView === 'landing') {
       return <LandingPage onEnterApp={handleGetStarted} />;
   }
@@ -217,10 +393,23 @@ const App: React.FC = () => {
       return <ProfileCreation onComplete={handleProfileComplete} onBack={() => setAppView('landing')} />;
   }
 
-  if (appView === 'account' && userProfile) {
+  if (appView === 'account' && (userProfile || authenticatedUser)) {
+      // Use authenticated user data if available, otherwise fall back to userProfile
+      const displayProfile = authenticatedUser ? {
+        id: authenticatedUser.id,
+        name: authenticatedUser.name,
+        role: authenticatedUser.role || '',
+        focus: authenticatedUser.focus || [],
+        services: authenticatedUser.services || [],
+        topics: authenticatedUser.topics || [],
+        avatarInitial: authenticatedUser.avatarInitial || authenticatedUser.name.charAt(0).toUpperCase()
+      } : userProfile;
+
+      if (!displayProfile) return null;
+
       return (
         <ProfileDashboard
-          profile={userProfile}
+          profile={displayProfile}
           leads={crmLeads}
           onBack={() => setAppView('dashboard')}
           onUpdateProfile={updateUserProfile}
@@ -233,10 +422,10 @@ const App: React.FC = () => {
 
   if (appView === 'vib3hub' && activeHubItem) {
       return (
-          <Vib3Hub 
-            business={activeHubItem as JobListing} 
+          <Vib3Hub
+            business={activeHubItem as JobListing}
             opportunity={(activeHubItem as any).analysis}
-            onBack={handleBackToDashboard} 
+            onBack={handleBackToDashboard}
           />
       );
   }
