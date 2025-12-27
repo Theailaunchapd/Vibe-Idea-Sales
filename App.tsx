@@ -163,6 +163,20 @@ const App: React.FC = () => {
 
   const handleGetStarted = () => {
       // Go directly to dashboard without requiring login
+      // Create a default guest profile if none exists
+      if (!userProfile && !authenticatedUser) {
+        const guestProfile: UserProfile = {
+          name: 'Guest Agent',
+          role: 'Sales Agent',
+          focus: ['AI Automation', 'Lead Generation'],
+          services: ['Consulting', 'Implementation'],
+          topics: ['Technology', 'Business Services'],
+          avatarInitial: 'G',
+        };
+        const ensured = ensureUserId(guestProfile) || guestProfile;
+        localStorage.setItem('vib3_user', JSON.stringify(ensured));
+        setUserProfile(ensured);
+      }
       setAppView('dashboard');
   };
 
@@ -468,6 +482,23 @@ const App: React.FC = () => {
           />
       );
   }
+
+  // Ensure guest profile exists for dashboard view
+  useEffect(() => {
+    if (appView === 'dashboard' && !userProfile && !authenticatedUser) {
+      const guestProfile: UserProfile = {
+        name: 'Guest Agent',
+        role: 'Sales Agent',
+        focus: ['AI Automation', 'Lead Generation'],
+        services: ['Consulting', 'Implementation'],
+        topics: ['Technology', 'Business Services'],
+        avatarInitial: 'G',
+      };
+      const ensured = ensureUserId(guestProfile) || guestProfile;
+      localStorage.setItem('vib3_user', JSON.stringify(ensured));
+      setUserProfile(ensured);
+    }
+  }, [appView, userProfile, authenticatedUser]);
 
   // DASHBOARD VIEW
   return (
