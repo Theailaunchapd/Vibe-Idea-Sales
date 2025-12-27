@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Business, CrmLead, JobListing, RedditIdea, SocialIdea, UserProfile } from './types';
 import { searchJobs, searchBusinessOpportunities, scanRedditIdeas, scanSocialIdeas } from './services/openaiService';
 import { JobCard } from './components/JobCard';
+import { JobListView } from './components/JobListView';
 import { BusinessCard } from './components/BusinessCard';
 import { BusinessListView } from './components/BusinessListView';
 import { Pagination } from './components/Pagination';
@@ -110,8 +111,18 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Saved Leads CRM (per-user) - use authenticated user ID if available, otherwise fall back to old profile ID
-  const userId = authenticatedUser?.id || userProfile?.id || null;
+  // Saved Leads CRM (per-user) - use authenticated user ID if available, otherwise fall back to old profile ID or generate guest ID
+  const userId = useMemo(() => {
+    if (authenticatedUser?.id) return authenticatedUser.id;
+    if (userProfile?.id) return userProfile.id;
+    // Generate a guest ID for anonymous users so CRM still works
+    let guestId = localStorage.getItem('vib3_guest_id');
+    if (!guestId) {
+      guestId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem('vib3_guest_id', guestId);
+    }
+    return guestId;
+  }, [authenticatedUser?.id, userProfile?.id]);
   const [crmLeads, setCrmLeads] = useState<CrmLead[]>(() => (userId ? loadCrmLeads(userId) : []));
 
   useEffect(() => {
@@ -151,15 +162,8 @@ const App: React.FC = () => {
   const [activeHubItem, setActiveHubItem] = useState<JobListing | Business | null>(null);
 
   const handleGetStarted = () => {
-      if (authenticatedUser) {
-          setAppView('dashboard');
-      } else if (userProfile) {
-          // Old user with localStorage profile
-          setAppView('dashboard');
-      } else {
-          // New user - send to login
-          setAppView('login');
-      }
+      // Go directly to dashboard without requiring login
+      setAppView('dashboard');
   };
 
   const handleProfileComplete = (profile: UserProfile) => {
@@ -609,20 +613,25 @@ const App: React.FC = () => {
 
         {/* Results Area */}
         {searchMode === 'jobs' && jobs.length > 0 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
              <div className="flex justify-between items-center px-2">
                  <h3 className="font-semibold text-gray-700">Found {jobs.length} Opportunities</h3>
              </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {jobs.map((job) => (
-                    <JobCard
-                        key={job.id}
-                        job={job}
-                        onClick={() => setSelectedJob(job)}
-                    />
-                ))}
-             </div>
+
+             <JobListView
+               jobs={jobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
+               onJobClick={setSelectedJob}
+             />
+
+             {jobs.length > itemsPerPage && (
+               <Pagination
+                 currentPage={currentPage}
+                 totalPages={Math.ceil(jobs.length / itemsPerPage)}
+                 totalItems={jobs.length}
+                 itemsPerPage={itemsPerPage}
+                 onPageChange={setCurrentPage}
+               />
+             )}
           </div>
         )}
 
@@ -653,13 +662,13 @@ const App: React.FC = () => {
         )}
 
         {searchMode === 'reddit' && redditIdeas.length > 0 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex justify-between items-center px-2">
                     <h3 className="font-semibold text-gray-700">Scouted {redditIdeas.length} Viral Ideas</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {redditIdeas.map((idea) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[800px] overflow-y-auto pr-2">
+                    {redditIdeas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((idea) => (
                         <RedditIdeaCard
                             key={idea.id}
                             idea={idea}
@@ -667,17 +676,27 @@ const App: React.FC = () => {
                         />
                     ))}
                 </div>
+
+                {redditIdeas.length > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(redditIdeas.length / itemsPerPage)}
+                    totalItems={redditIdeas.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
             </div>
         )}
 
         {searchMode === 'social' && socialIdeas.length > 0 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex justify-between items-center px-2">
                     <h3 className="font-semibold text-gray-700">Found {socialIdeas.length} Business Ideas on X.com</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {socialIdeas.map((idea) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[800px] overflow-y-auto pr-2">
+                    {socialIdeas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((idea) => (
                         <SocialIdeaCard
                             key={idea.id}
                             idea={idea}
@@ -685,6 +704,16 @@ const App: React.FC = () => {
                         />
                     ))}
                 </div>
+
+                {socialIdeas.length > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(socialIdeas.length / itemsPerPage)}
+                    totalItems={socialIdeas.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
             </div>
         )}
 
