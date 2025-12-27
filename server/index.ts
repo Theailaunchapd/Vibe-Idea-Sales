@@ -623,9 +623,9 @@ app.post('/api/scan-social', async (req, res) => {
     } else {
       res.json([]);
     }
-  } catch (e) {
-    console.error("Failed to scan social media", e);
-    res.status(500).json({ error: "Failed to scan social media" });
+  } catch (e: any) {
+    console.error("Failed to scan social media:", e?.message || e);
+    res.status(500).json({ error: "Failed to scan social media", details: e?.message });
   }
 });
 
