@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { SocialIdea, SocialAnalysis, GeneratedDocument } from '../types';
 import { analyzeSocialIdea, generatePRD, generateDeveloperGuide } from '../services/openaiService';
-import { X, Loader2, Sparkles, Rocket, TrendingUp, Code2, DollarSign, Target, Zap, FileText, Code, ExternalLink, MessageSquare, Send } from 'lucide-react';
+import { X, Loader2, Sparkles, Rocket, TrendingUp, Code2, DollarSign, Target, Zap, FileText, Code, ExternalLink, MessageSquare, Send, Bookmark, BookmarkCheck } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
 import DocumentModal from './DocumentModal';
 
 interface SocialIdeaModalProps {
   idea: SocialIdea;
   onClose: () => void;
+  isSaved?: boolean;
+  onSaveLead?: (idea: SocialIdea) => void;
+  onUnsaveLead?: (ideaId: string) => void;
 }
 
-export const SocialIdeaModal: React.FC<SocialIdeaModalProps> = ({ idea, onClose }) => {
+export const SocialIdeaModal: React.FC<SocialIdeaModalProps> = ({ idea, onClose, isSaved, onSaveLead, onUnsaveLead }) => {
   const [analysis, setAnalysis] = useState<SocialAnalysis | null>(idea.analysis || null);
   const [loading, setLoading] = useState(!idea.analysis);
   const [activeTab, setActiveTab] = useState<'opportunity' | 'implementation' | 'market'>('opportunity');
@@ -158,6 +161,22 @@ export const SocialIdeaModal: React.FC<SocialIdeaModalProps> = ({ idea, onClose 
                 <div className="text-[10px] uppercase font-bold text-gray-400">Composite</div>
                 <ScoreBadge score={analysis.scores.composite} />
               </div>
+            )}
+            {(onSaveLead || onUnsaveLead) && (
+              <button
+                onClick={() => {
+                  if (isSaved) onUnsaveLead?.(idea.id);
+                  else onSaveLead?.(idea);
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  isSaved
+                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                {isSaved ? 'Saved to CRM' : 'Save to CRM'}
+              </button>
             )}
             <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full text-gray-400 hover:text-gray-900 transition-colors">
               <X size={24} />

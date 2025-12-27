@@ -22,7 +22,7 @@ import ForgotPasswordPage from './components/ForgotPasswordPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import { Briefcase, Building2, ChevronDown, Flame, Loader2, MapPin, Twitter } from 'lucide-react';
-import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness } from './services/crmStorage';
+import { clearUserProfile, ensureUserId, loadCrmLeads, mergeLead, saveCrmLeads, upsertLeadFromBusiness, upsertLeadFromSocial } from './services/crmStorage';
 import { TokenStorage, getCurrentUser, logout as authLogout, setupTokenRefresh, clearTokenRefresh, type SafeUser } from './services/authService';
 
 type ViewState = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verify-email' | 'profile' | 'dashboard' | 'vib3hub';
@@ -205,7 +205,8 @@ const App: React.FC = () => {
     setAppView('login');
   };
 
-  const crmBusinessIdSet = useMemo(() => new Set(crmLeads.map((l) => l.businessId)), [crmLeads]);
+  const crmBusinessIdSet = useMemo(() => new Set(crmLeads.filter(l => l.businessId).map((l) => l.businessId)), [crmLeads]);
+  const crmSocialIdSet = useMemo(() => new Set(crmLeads.filter(l => l.socialId).map((l) => l.socialId)), [crmLeads]);
 
   const saveBusinessLead = (business: Business) => {
     if (!userId) return;
@@ -221,6 +222,22 @@ const App: React.FC = () => {
   const unsaveBusinessLead = (businessId: string) => {
     if (!userId) return;
     setCrmLeads((prev) => prev.filter((l) => l.businessId !== businessId));
+  };
+
+  const saveSocialLead = (socialIdea: SocialIdea) => {
+    if (!userId) return;
+    setCrmLeads((prev) => {
+      const existing = prev.find((l) => l.socialId === socialIdea.id);
+      if (existing) {
+        return prev.map((l) => (l.id === existing.id ? mergeLead(l, { socialIdea }) : l));
+      }
+      return [upsertLeadFromSocial({ ownerUserId: userId, socialIdea }), ...prev];
+    });
+  };
+
+  const unsaveSocialLead = (socialId: string) => {
+    if (!userId) return;
+    setCrmLeads((prev) => prev.filter((l) => l.socialId !== socialId));
   };
 
   const updateCrmLead = (leadId: string, patch: Partial<CrmLead>) => {
@@ -701,6 +718,9 @@ const App: React.FC = () => {
                             key={idea.id}
                             idea={idea}
                             onClick={() => setSelectedSocialIdea(idea)}
+                            isSaved={crmSocialIdSet.has(idea.id)}
+                            onSave={saveSocialLead}
+                            onUnsave={unsaveSocialLead}
                         />
                     ))}
                 </div>
@@ -766,6 +786,9 @@ const App: React.FC = () => {
           <SocialIdeaModal
             idea={selectedSocialIdea}
             onClose={() => setSelectedSocialIdea(null)}
+            isSaved={crmSocialIdSet.has(selectedSocialIdea.id)}
+            onSaveLead={saveSocialLead}
+            onUnsaveLead={unsaveSocialLead}
           />
       )}
     </div>

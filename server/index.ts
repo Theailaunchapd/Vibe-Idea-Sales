@@ -644,10 +644,15 @@ app.post('/api/generate-workflow-demo', async (req, res) => {
 
 app.post('/api/scan-social', async (req, res) => {
   const { topic } = req.body;
+  
+  const searchSeed = Date.now() + Math.floor(Math.random() * 1000000);
 
   const prompt = `
     You are the VIB3 Social Media Scout for X.com (Twitter).
     Task: Scan X.com for posts related to "${topic || 'business ideas, startup ideas, things I wish existed'}".
+    
+    RANDOMIZATION SEED: ${searchSeed}
+    Use this seed to generate completely different and unique posts each time. Do NOT repeat any posts from previous searches.
 
     Focus on finding posts that mention:
     - Startup ideas or business opportunities
@@ -657,8 +662,9 @@ app.post('/api/scan-social', async (req, res) => {
     - Suggestions for new AI-powered services
     - Entrepreneurial discussions
 
-    Generate exactly 50 realistic X.com posts that represent business opportunities.
+    Generate exactly 25 realistic X.com posts that represent business opportunities.
     Each post should feel authentic and include realistic engagement metrics.
+    Use diverse author names, handles, and post content each time.
 
     Return JSON:
     {
@@ -686,6 +692,7 @@ app.post('/api/scan-social', async (req, res) => {
 
     Make the posts feel authentic - vary engagement levels, include realistic hashtags,
     and ensure diverse perspectives on business ideas that could be turned into AI services.
+    Each search must produce completely NEW posts. Use seed ${searchSeed} for variety.
   `;
 
   try {

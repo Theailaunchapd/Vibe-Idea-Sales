@@ -325,9 +325,11 @@ export interface CrmLead {
   ownerUserId: string;
 
   // Source entity
-  source: 'business';
-  businessId: string;
-  business: Business;
+  source: 'business' | 'social';
+  businessId?: string;
+  business?: Business;
+  socialId?: string;
+  socialIdea?: SocialIdea;
 
   // CRM fields
   status: LeadStatus;

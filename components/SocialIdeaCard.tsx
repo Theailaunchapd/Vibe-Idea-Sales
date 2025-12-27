@@ -1,13 +1,24 @@
 import React from 'react';
 import { SocialIdea } from '../types';
-import { Heart, Repeat2, MessageCircle, Eye, Hash, ExternalLink } from 'lucide-react';
+import { Heart, Repeat2, MessageCircle, Eye, Hash, ExternalLink, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface SocialIdeaCardProps {
   idea: SocialIdea;
   onClick: () => void;
+  isSaved?: boolean;
+  onSave?: (idea: SocialIdea) => void;
+  onUnsave?: (ideaId: string) => void;
 }
 
-export const SocialIdeaCard: React.FC<SocialIdeaCardProps> = ({ idea, onClick }) => {
+export const SocialIdeaCard: React.FC<SocialIdeaCardProps> = ({ idea, onClick, isSaved, onSave, onUnsave }) => {
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSaved) {
+      onUnsave?.(idea.id);
+    } else {
+      onSave?.(idea);
+    }
+  };
   const categoryColors = {
     startup: 'bg-purple-100 text-purple-700 border-purple-200',
     saas: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -27,8 +38,23 @@ export const SocialIdeaCard: React.FC<SocialIdeaCardProps> = ({ idea, onClick })
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
           X.COM SCOUT
         </div>
-        <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${categoryColors[idea.category]}`}>
-          {idea.category.toUpperCase()}
+        <div className="flex items-center gap-2">
+          <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${categoryColors[idea.category]}`}>
+            {idea.category.toUpperCase()}
+          </div>
+          {(onSave || onUnsave) && (
+            <button
+              onClick={handleSaveClick}
+              className={`p-1.5 rounded-lg transition-all ${
+                isSaved
+                  ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={isSaved ? 'Saved to CRM' : 'Save to CRM'}
+            >
+              {isSaved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+            </button>
+          )}
         </div>
       </div>
 

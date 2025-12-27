@@ -1,4 +1,4 @@
-import type { Business, CrmLead, LeadPriority, LeadStatus, UserProfile } from '../types';
+import type { Business, CrmLead, LeadPriority, LeadStatus, SocialIdea, UserProfile } from '../types';
 
 const USER_KEY = 'vib3_user';
 
@@ -86,6 +86,31 @@ export function upsertLeadFromBusiness(opts: {
     source: 'business',
     businessId: opts.business.id,
     business: opts.business,
+    status,
+    priority,
+    tags: [],
+    notes: '',
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
+export function upsertLeadFromSocial(opts: {
+  ownerUserId: string;
+  socialIdea: SocialIdea;
+  status?: LeadStatus;
+  priority?: LeadPriority;
+}): CrmLead {
+  const status: LeadStatus = opts.status || 'New';
+  const priority: LeadPriority = opts.priority || 'Medium';
+  const createdAt = nowIso();
+
+  return {
+    id: `lead_social_${opts.socialIdea.id}_${Math.random().toString(16).slice(2, 10)}`,
+    ownerUserId: opts.ownerUserId,
+    source: 'social',
+    socialId: opts.socialIdea.id,
+    socialIdea: opts.socialIdea,
     status,
     priority,
     tags: [],
