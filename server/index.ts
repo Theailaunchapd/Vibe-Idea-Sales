@@ -47,16 +47,23 @@ app.post('/api/search-jobs', async (req, res) => {
   
   const prompt = `
     You are a Job Market Intelligence Agent.
-    Task: Search for 15-20 realistic job postings for "${query}" in "${location}" within a ${radius}-mile radius.
+    Task: Search for 15-20 REAL job postings for "${query}" in "${location}" within a ${radius}-mile radius.
     
-    For each job, extract or simulate realistic details found on major job boards (Indeed, LinkedIn, etc.):
-    1. Job Title & Company Name.
-    2. Realistic salary range (if typical for role).
-    3. Source (e.g., Indeed, LinkedIn, Company Site).
-    4. Key responsibilities snippet (2-3 sentences).
-    5. Required skills (3-5 keywords).
-    6. "AI Potential Score" (0-100): How easily can this role be automated or augmented by AI?
-    7. Location should be within ${radius} miles of ${location}.
+    For each job, provide REAL details:
+    1. Job Title & Company Name (use actual companies if possible)
+    2. Realistic salary range (if typical for role)
+    3. Source (e.g., Indeed, LinkedIn, Glassdoor, ZipRecruiter) - MUST BE REAL
+    4. URL - Provide realistic job board URLs (e.g., https://www.indeed.com/job/..., https://www.linkedin.com/jobs/...)
+    5. Key responsibilities snippet (2-3 sentences)
+    6. Full job description (detailed description of responsibilities, requirements, benefits - 3-5 paragraphs)
+    7. Required skills (3-5 keywords)
+    8. "AI Potential Score" (0-100): How easily can this role be automated or augmented by AI?
+    9. Location should be within ${radius} miles of ${location}
+
+    CRITICAL:
+    - Make URLs look realistic (use actual job board URL patterns)
+    - Source must be a real job board name
+    - Include a detailed fullDescription field for deeper AI analysis
 
     Return JSON with structure:
     {
@@ -68,9 +75,10 @@ app.post('/api/search-jobs', async (req, res) => {
           "location": "string",
           "salaryRange": "string (optional)",
           "postedDate": "string (e.g. '2 days ago')",
-          "source": "string",
-          "url": "string (optional mock url)",
-          "snippet": "string",
+          "source": "string (e.g., 'Indeed', 'LinkedIn')",
+          "url": "string (realistic job posting URL)",
+          "snippet": "string (2-3 sentences summary)",
+          "fullDescription": "string (detailed 3-5 paragraph job description including responsibilities, requirements, qualifications, benefits)",
           "skills": ["string"],
           "aiPotentialScore": number
         }
@@ -236,43 +244,86 @@ app.post('/api/analyze-job', async (req, res) => {
   const { job } = req.body;
 
   const prompt = `
-    Perform a deep-dive analysis on this job posting to create a "Job Market Intelligence Report".
+    Perform a comprehensive deep-dive analysis on this job posting to create a "Job Market Intelligence Report".
     
     Job: ${job.title} at ${job.company}
     Snippet: ${job.snippet}
+    Full Description: ${job.fullDescription || 'Not available - use snippet'}
+    Skills Required: ${job.skills?.join(', ') || 'Not specified'}
     
-    Generate 3 distinct sections in JSON.
-
-    Return JSON:
+    Your task is to:
+    1. Analyze the FULL job description in detail
+    2. Convert this job role into a viable AI-powered business service/product
+    3. Create a comprehensive business plan
+    4. Design an implementation guide
+    5. Show key benefits focused on eliminating headcount costs for businesses
+    
+    Return JSON with EXACT structure:
     {
       "applicationStrategy": {
-        "resumeKeywords": ["string"],
-        "coverLetterPoints": ["string"],
-        "interviewTips": ["string"]
+        "resumeKeywords": ["5-8 keywords from job description"],
+        "coverLetterPoints": ["3-5 compelling points for cover letter"],
+        "interviewTips": ["4-6 actionable interview tips"]
       },
       "aiServiceOpportunity": {
-        "serviceName": "string",
-        "description": "string",
-        "transformationTable": [{ "aspect": "string", "traditionalRole": "string", "aiPoweredService": "string" }],
-        "timeInvestment": { "traditional": "string", "aiAutomated": "string" },
-        "scalability": { "human": "string", "ai": "string" },
-        "costModel": { "traditional": "string", "aiService": "string" },
-        "pricingModel": ["string"],
-        "techStack": ["string"],
-        "marketOpportunity": { "targetCustomer": "string", "marketSize": "string", "competitionLevel": "string" }
+        "serviceName": "Name of AI Service (e.g., 'AI Customer Support Agent')",
+        "description": "2-3 sentence description of the AI service",
+        "businessPlan": {
+          "executiveSummary": "2-3 sentence overview of the AI service opportunity and market potential",
+          "problemStatement": "What pain point does hiring for this role indicate? Why are companies struggling?",
+          "proposedSolution": "How can AI solve this better than hiring a human? What's the core value prop?",
+          "revenueModel": "How will you monetize? (e.g., SaaS subscription, usage-based, tiered pricing)",
+          "targetMarket": "Who will pay for this service? (e.g., 'SMBs with 10-100 employees in retail/hospitality')"
+        },
+        "keyBenefits": [
+          {
+            "benefit": "Benefit title (e.g., '24/7 Availability Without Overtime')",
+            "impact": "What this means for the business (e.g., 'Never miss a customer inquiry, even at 3am')",
+            "savings": "Savings estimate (e.g., '$60K-80K per year in salary + benefits')"
+          }
+        ],
+        "transformationTable": [
+          {
+            "aspect": "Aspect name (e.g., 'Availability', 'Response Time', 'Cost')",
+            "traditionalRole": "How traditional role handles this",
+            "aiPoweredService": "How AI handles this better"
+          }
+        ],
+        "timeInvestment": {
+          "traditional": "e.g., '40 hours/week + overtime'",
+          "aiAutomated": "e.g., 'Instant / 24/7 / Always On'"
+        },
+        "scalability": {
+          "human": "e.g., 'Linear: need 2x staff for 2x volume'",
+          "ai": "e.g., 'Infinite: handles 1000x volume at same cost'"
+        },
+        "costModel": {
+          "traditional": "e.g., '$60K salary + $20K benefits + $5K training = $85K/year'",
+          "aiService": "e.g., '$499/month = $6K/year (93% savings)'"
+        },
+        "pricingModel": ["Starter $99/mo", "Professional $299/mo", "Enterprise $999/mo"],
+        "techStack": ["OpenAI GPT-4", "Twilio API", "React", "Node.js", "PostgreSQL"],
+        "marketOpportunity": {
+          "targetCustomer": "e.g., 'SMBs hiring for customer service roles'",
+          "marketSize": "e.g., '$50B industry, 500K companies hiring annually'",
+          "competitionLevel": "Low|Medium|High"
+        }
       },
       "implementationPlan": {
-        "mvpSteps": ["string"],
-        "packagingSteps": ["string"],
-        "gtmSteps": ["string"],
-        "workflowArchitecture": "string"
+        "mvpSteps": ["4-6 concrete steps for building MVP in weeks 1-2"],
+        "packagingSteps": ["4-6 steps to productize in weeks 3-4"],
+        "gtmSteps": ["4-6 go-to-market actions for weeks 5-6"],
+        "workflowArchitecture": "2-3 sentences describing the technical workflow"
       }
     }
+    
+    Focus heavily on the business plan and key benefits sections. Make them specific to this exact job role.
+    Show clear ROI and savings compared to hiring a human.
   `;
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }
     });

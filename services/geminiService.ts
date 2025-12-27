@@ -29,17 +29,27 @@ export const searchJobs = async (
   const modelId = "gemini-2.5-flash"; 
   
   const prompt = `
-    You are a Job Market Intelligence Agent.
-    Task: Search for 15-20 realistic job postings for "${query}" in "${location}".
+    You are a Job Market Intelligence Agent with web search capabilities.
+    Task: Search for 15-20 REAL job postings for "${query}" in "${location}" using live data.
     
-    For each job, extract or simulate realistic details found on major job boards (Indeed, LinkedIn, etc.):
-    1. Job Title & Company Name.
-    2. Realistic salary range (if typical for role).
-    3. Source (e.g., Indeed, LinkedIn, Company Site).
-    4. Key responsibilities snippet (2-3 sentences).
-    5. Required skills (3-5 keywords).
-    6. "AI Potential Score" (0-100): How easily can this role be automated or augmented by AI? (High score = high automation potential).
+    Use web search to find actual job listings from major job boards (Indeed, LinkedIn, Glassdoor, ZipRecruiter, etc.).
+    
+    For each job, extract:
+    1. Job Title & Company Name (real companies)
+    2. Realistic salary range (if available)
+    3. Source platform (e.g., Indeed, LinkedIn, Glassdoor) - MUST BE REAL
+    4. URL - MUST be the actual URL to the job posting
+    5. Key responsibilities snippet (2-3 sentences from the actual posting)
+    6. Required skills (3-5 keywords from actual job posting)
+    7. Posted date (e.g., "2 days ago", "1 week ago")
+    8. "AI Potential Score" (0-100): How easily can this role be automated or augmented by AI? (High score = high automation potential)
+    9. Full job description (if available from search results)
 
+    CRITICAL: 
+    - Use google search to find REAL job postings
+    - Include actual URLs to the job listings
+    - Source must be a real job board name
+    
     IMPORTANT: Return ONLY a raw JSON array. Do not use Markdown formatting.
     JSON Structure:
     [
@@ -50,9 +60,10 @@ export const searchJobs = async (
         "location": "string",
         "salaryRange": "string (optional)",
         "postedDate": "string (e.g. '2 days ago')",
-        "source": "string",
-        "url": "string (optional mock url)",
-        "snippet": "string",
+        "source": "string (e.g., 'Indeed', 'LinkedIn')",
+        "url": "string (actual URL to job posting)",
+        "snippet": "string (key responsibilities)",
+        "fullDescription": "string (optional, full description if available)",
         "skills": ["string"],
         "aiPotentialScore": number
       }
@@ -84,29 +95,56 @@ export const analyzeJobDeepDive = async (job: JobListing): Promise<JobAnalysis |
   const modelId = "gemini-2.5-flash"; 
 
   const prompt = `
-    Perform a deep-dive analysis on this job posting to create a "Job Market Intelligence Report".
+    Perform a comprehensive deep-dive analysis on this job posting to create a "Job Market Intelligence Report".
     
     Job: ${job.title} at ${job.company}
     Snippet: ${job.snippet}
+    Full Description: ${job.fullDescription || 'Not available - use snippet'}
+    Skills Required: ${job.skills.join(', ')}
     
-    Generate 3 distinct sections in JSON. Keep descriptions high-quality but concise to fit within generation limits.
+    Your task is to:
+    1. Analyze the FULL job description in detail
+    2. Convert this job role into a viable AI-powered business service/product
+    3. Create a comprehensive business plan
+    4. Design an implementation guide
+    5. Show key benefits focused on eliminating headcount costs for businesses
+    
+    Generate 3 distinct sections in JSON:
 
     1. APPLICATION STRATEGY (For the human applicant):
-       - Resume keywords
-       - Cover letter points
-       - Interview tips
+       - Resume keywords (5-8 keywords)
+       - Cover letter points (3-5 compelling points)
+       - Interview tips (4-6 actionable tips)
 
-    2. AI SERVICE OPPORTUNITY (JB Workflows):
-       - Propose a specific AI Service that could replace or heavily augment this job.
-       - Create a "Transformation Table" comparing Traditional vs AI.
-       - Define Pricing & Cost models.
-       - Estimate Market Opportunity.
+    2. AI SERVICE OPPORTUNITY (JB Workflows) - THE MAIN FOCUS:
+       
+       a) BUSINESS PLAN:
+          - Executive Summary: 2-3 sentence overview of the AI service opportunity
+          - Problem Statement: What pain point does hiring for this role indicate?
+          - Proposed Solution: How can AI solve this better than hiring?
+          - Revenue Model: How will you monetize this (subscription, usage-based, etc.)?
+          - Target Market: Who will pay for this service?
+       
+       b) KEY BENEFITS (Focus on headcount elimination):
+          Create 3-6 specific benefits showing how this AI service eliminates the need for hiring.
+          Each benefit should have:
+          - Benefit title (e.g., "24/7 Availability", "Zero Employee Turnover")
+          - Impact description (what this means for the business)
+          - Savings estimate (e.g., "$60K-80K/year per replaced hire")
+       
+       c) Propose a specific AI Service name and description
+       d) Create a "Transformation Table" comparing Traditional Role vs AI Service (5-7 rows)
+       e) Define Pricing & Cost models showing massive savings vs hiring
+       f) Estimate Market Opportunity
+       g) Suggest tech stack
 
     3. IMPLEMENTATION PLAN:
-       - MVP Steps (Week 1-2)
-       - Packaging Steps (Week 3-4)
-       - GTM Steps (Week 5-6)
-       - Brief Workflow Architecture description.
+       - MVP Steps (Week 1-2): 4-6 concrete steps
+       - Packaging Steps (Week 3-4): 4-6 steps to productize
+       - GTM Steps (Week 5-6): 4-6 go-to-market actions
+       - Brief Workflow Architecture description (2-3 sentences)
+    
+    Keep descriptions high-quality but concise to fit within generation limits.
   `;
 
   try {
@@ -132,6 +170,27 @@ export const analyzeJobDeepDive = async (job: JobListing): Promise<JobAnalysis |
               properties: {
                 serviceName: { type: Type.STRING },
                 description: { type: Type.STRING },
+                businessPlan: {
+                  type: Type.OBJECT,
+                  properties: {
+                    executiveSummary: { type: Type.STRING },
+                    problemStatement: { type: Type.STRING },
+                    proposedSolution: { type: Type.STRING },
+                    revenueModel: { type: Type.STRING },
+                    targetMarket: { type: Type.STRING },
+                  }
+                },
+                keyBenefits: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      benefit: { type: Type.STRING },
+                      impact: { type: Type.STRING },
+                      savings: { type: Type.STRING },
+                    }
+                  }
+                },
                 transformationTable: {
                   type: Type.ARRAY,
                   items: {
