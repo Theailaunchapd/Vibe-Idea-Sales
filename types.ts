@@ -7,8 +7,9 @@ export interface JobListing {
   salaryRange?: string;
   postedDate: string;
   source: string; // e.g. "LinkedIn", "Indeed"
-  url?: string;
+  url: string; // Link to actual job posting
   snippet: string; // Key responsibilities summary
+  fullDescription?: string; // Full job description for deeper analysis
   skills: string[];
   aiPotentialScore: number; // 0-100, how easily AI can augment/replace
   analysis?: JobAnalysis;
@@ -26,10 +27,22 @@ export interface JobAnalysis {
   aiServiceOpportunity: {
     serviceName: string;
     description: string;
+    businessPlan: {
+      executiveSummary: string;
+      problemStatement: string;
+      proposedSolution: string;
+      revenueModel: string;
+      targetMarket: string;
+    };
     transformationTable: {
       aspect: string;
       traditionalRole: string;
       aiPoweredService: string;
+    }[];
+    keyBenefits: {
+      benefit: string;
+      impact: string;
+      savings: string;
     }[];
     timeInvestment: {
       traditional: string; // e.g. "40h/week"

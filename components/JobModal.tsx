@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { JobListing, JobAnalysis } from '../types';
 import { analyzeJobDeepDive } from '../services/openaiService';
-import { X, Briefcase, Bot, Hammer, Loader2, CheckCircle2, ChevronRight, Zap, ArrowRight, DollarSign, Clock, LayoutGrid, Sparkles, Server } from 'lucide-react';
+import { X, Briefcase, Bot, Hammer, Loader2, CheckCircle2, ChevronRight, Zap, ArrowRight, DollarSign, Clock, LayoutGrid, Sparkles, Server, ExternalLink, TrendingUp, Target } from 'lucide-react';
 
 interface JobModalProps {
   job: JobListing;
@@ -38,7 +38,7 @@ export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pi
         
         {/* Header */}
         <div className="bg-white border-b border-gray-100 p-6 flex justify-between items-start z-10">
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{job.title}</h2>
             <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
                <span className="font-semibold text-gray-700">{job.company}</span>
@@ -51,6 +51,16 @@ export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pi
                    </>
                )}
             </div>
+            {job.url && (
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium transition-colors border border-blue-200"
+              >
+                <span className="font-semibold">Source:</span> {job.source} <ExternalLink size={14} />
+              </a>
+            )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 transition-colors">
             <X size={24} />
@@ -157,6 +167,68 @@ export const JobModal: React.FC<JobModalProps> = ({ job, onClose, onCreateVib3Pi
                                      <p className="text-purple-100 max-w-2xl text-lg">{analysis.aiServiceOpportunity.description}</p>
                                  </div>
                              </div>
+
+                             {/* Business Plan Section */}
+                             {analysis.aiServiceOpportunity.businessPlan && (
+                                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                     <h3 className="font-bold text-gray-900 text-xl mb-6 flex items-center gap-2">
+                                         <Briefcase className="text-purple-600" size={22} /> Business Plan
+                                     </h3>
+                                     <div className="space-y-4">
+                                         <div>
+                                             <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Executive Summary</h4>
+                                             <p className="text-gray-700 leading-relaxed">{analysis.aiServiceOpportunity.businessPlan.executiveSummary}</p>
+                                         </div>
+                                         <div className="grid md:grid-cols-2 gap-4">
+                                             <div>
+                                                 <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Problem Statement</h4>
+                                                 <p className="text-sm text-gray-600 leading-relaxed">{analysis.aiServiceOpportunity.businessPlan.problemStatement}</p>
+                                             </div>
+                                             <div>
+                                                 <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Proposed Solution</h4>
+                                                 <p className="text-sm text-gray-600 leading-relaxed">{analysis.aiServiceOpportunity.businessPlan.proposedSolution}</p>
+                                             </div>
+                                         </div>
+                                         <div className="grid md:grid-cols-2 gap-4">
+                                             <div>
+                                                 <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Revenue Model</h4>
+                                                 <p className="text-sm text-gray-600 leading-relaxed">{analysis.aiServiceOpportunity.businessPlan.revenueModel}</p>
+                                             </div>
+                                             <div>
+                                                 <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Target Market</h4>
+                                                 <p className="text-sm text-gray-600 leading-relaxed">{analysis.aiServiceOpportunity.businessPlan.targetMarket}</p>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             )}
+
+                             {/* Key Benefits - Headcount Elimination */}
+                             {analysis.aiServiceOpportunity.keyBenefits && analysis.aiServiceOpportunity.keyBenefits.length > 0 && (
+                                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+                                     <h3 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
+                                         <TrendingUp className="text-green-600" size={22} /> Key Benefits: Eliminate Headcount
+                                     </h3>
+                                     <div className="grid md:grid-cols-3 gap-4">
+                                         {analysis.aiServiceOpportunity.keyBenefits.map((benefit, idx) => (
+                                             <div key={idx} className="bg-white p-4 rounded-lg border border-green-100">
+                                                 <div className="flex items-start gap-3">
+                                                     <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                                         <Target className="text-green-600" size={16} />
+                                                     </div>
+                                                     <div className="flex-1">
+                                                         <h4 className="font-bold text-gray-900 mb-1">{benefit.benefit}</h4>
+                                                         <p className="text-xs text-gray-600 mb-2">{benefit.impact}</p>
+                                                         <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full text-xs font-bold text-green-700">
+                                                             <DollarSign size={12} /> {benefit.savings}
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         ))}
+                                     </div>
+                                 </div>
+                             )}
 
                              {/* Transformation Table */}
                              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">

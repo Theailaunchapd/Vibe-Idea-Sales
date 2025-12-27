@@ -1,6 +1,6 @@
 import React from 'react';
 import { JobListing } from '../types';
-import { Building2, MapPin, Clock, DollarSign, Sparkles } from 'lucide-react';
+import { Building2, MapPin, Clock, DollarSign, Sparkles, ExternalLink } from 'lucide-react';
 
 interface JobCardProps {
   job: JobListing;
@@ -13,13 +13,20 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
   if (score > 75) scoreColor = 'bg-green-100 text-green-700 border-green-200';
   else if (score > 50) scoreColor = 'bg-blue-100 text-blue-700 border-blue-200';
 
+  const handleSourceClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (job.url) {
+      window.open(job.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div 
       onClick={onClick}
       className="bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 rounded-xl p-5 cursor-pointer group relative overflow-hidden"
     >
       <div className="flex justify-between items-start mb-3">
-        <div>
+        <div className="flex-1">
            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
             {job.title}
           </h3>
@@ -37,6 +44,14 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
         <span className="flex items-center"><MapPin size={12} className="mr-1" /> {job.location}</span>
         {job.salaryRange && <span className="flex items-center"><DollarSign size={12} className="mr-1" /> {job.salaryRange}</span>}
         <span className="flex items-center"><Clock size={12} className="mr-1" /> {job.postedDate}</span>
+        {job.source && (
+          <button
+            onClick={handleSourceClick}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
+          >
+            {job.source} <ExternalLink size={10} />
+          </button>
+        )}
       </div>
 
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3">
