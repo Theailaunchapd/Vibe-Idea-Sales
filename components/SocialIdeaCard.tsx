@@ -1,6 +1,6 @@
 import React from 'react';
 import { SocialIdea } from '../types';
-import { Heart, Repeat2, MessageCircle, Eye, Hash } from 'lucide-react';
+import { Heart, Repeat2, MessageCircle, Eye, Hash, ExternalLink } from 'lucide-react';
 
 interface SocialIdeaCardProps {
   idea: SocialIdea;
@@ -39,7 +39,15 @@ export const SocialIdeaCard: React.FC<SocialIdeaCardProps> = ({ idea, onClick })
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-bold text-gray-900 truncate">{idea.author}</div>
-          <div className="text-[10px] text-gray-500 truncate">{idea.authorHandle}</div>
+          <a 
+            href={idea.sourceUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center gap-1"
+          >
+            {idea.authorHandle} <ExternalLink size={10} />
+          </a>
         </div>
       </div>
 

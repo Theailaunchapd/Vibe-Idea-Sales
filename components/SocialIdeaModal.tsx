@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SocialIdea, SocialAnalysis, GeneratedDocument } from '../types';
 import { analyzeSocialIdea, generatePRD, generateDeveloperGuide } from '../services/openaiService';
-import { X, Loader2, Sparkles, Rocket, TrendingUp, Code2, DollarSign, Target, Zap, FileText, Code } from 'lucide-react';
+import { X, Loader2, Sparkles, Rocket, TrendingUp, Code2, DollarSign, Target, Zap, FileText, Code, ExternalLink, MessageSquare, Send } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
 import DocumentModal from './DocumentModal';
 
@@ -111,7 +111,45 @@ export const SocialIdeaModal: React.FC<SocialIdeaModalProps> = ({ idea, onClose 
             <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
               <span className="font-medium">{idea.author}</span>
               <span>•</span>
-              <span className="text-blue-600">{idea.authorHandle}</span>
+              <a 
+                href={idea.sourceUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+              >
+                {idea.authorHandle} <ExternalLink size={12} />
+              </a>
+            </div>
+            
+            {/* Action buttons to engage with the post */}
+            <div className="flex items-center gap-2 mt-4">
+              <a
+                href={idea.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <ExternalLink size={14} />
+                View Post on X
+              </a>
+              <a
+                href={`https://twitter.com/intent/tweet?in_reply_to=${idea.sourceUrl.split('/').pop()}&text=`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <MessageSquare size={14} />
+                Reply
+              </a>
+              <a
+                href={`https://twitter.com/messages/compose?recipient_id=${idea.authorHandle.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-600 transition-colors"
+              >
+                <Send size={14} />
+                DM Author
+              </a>
             </div>
           </div>
           <div className="flex items-center gap-4">
