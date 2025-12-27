@@ -199,10 +199,38 @@ export interface LandingPageSpec {
 // --- User Profile ---
 
 export interface UserProfile {
+  id?: string;
   name: string;
   role: string;
   focus: string[];
   services: string[];
   topics: string[];
   avatarInitial?: string;
+}
+
+// --- Saved Leads CRM ---
+
+export type LeadStatus = 'New' | 'Contacted' | 'Meeting' | 'Proposal' | 'Won' | 'Lost';
+export type LeadPriority = 'Low' | 'Medium' | 'High';
+
+export interface CrmLead {
+  id: string;
+  ownerUserId: string;
+
+  // Source entity
+  source: 'business';
+  businessId: string;
+  business: Business;
+
+  // CRM fields
+  status: LeadStatus;
+  priority: LeadPriority;
+  tags: string[];
+  notes: string;
+  nextFollowUpAt?: string; // ISO date (YYYY-MM-DD) or full ISO string
+  lastContactedAt?: string; // ISO date
+
+  // Audit
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
 }

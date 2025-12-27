@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { Business, OpportunityAnalysis } from '../types';
 import { generateOpportunityBrief } from '../services/openaiService';
 import { ScoreBadge } from './ScoreBadge';
-import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart } from 'lucide-react';
+import { X, CheckCircle, Zap, Server, TrendingUp, Loader2, Globe, Phone, Mail, Star, ExternalLink, ArrowRight, BarChart3, Clock, DollarSign, PieChart, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface OpportunityModalProps {
   business: Business;
   onClose: () => void;
   onCreatePitch: () => void;
+  onSaveLead?: (business: Business) => void;
+  onUnsaveLead?: (businessId: string) => void;
+  isSaved?: boolean;
 }
 
-export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, onClose, onCreatePitch }) => {
+export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, onClose, onCreatePitch, onSaveLead, onUnsaveLead, isSaved }) => {
   const [analysis, setAnalysis] = useState<OpportunityAnalysis | null>(business.opportunity || null);
   const [loading, setLoading] = useState(!business.opportunity);
 
@@ -71,6 +74,22 @@ export const OpportunityModal: React.FC<OpportunityModalProps> = ({ business, on
             </div>
 
             <div className="flex items-center gap-6 flex-shrink-0">
+                {(onSaveLead || onUnsaveLead) && (
+                    <button
+                        onClick={() => {
+                            if (isSaved) onUnsaveLead?.(business.id);
+                            else onSaveLead?.(business);
+                        }}
+                        className={`px-3 py-2 rounded-xl font-bold text-xs border transition-all flex items-center gap-2 ${
+                            isSaved
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                        {isSaved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+                        {isSaved ? 'Saved to CRM' : 'Save to CRM'}
+                    </button>
+                )}
                 <div className="text-right hidden sm:block">
                     <div className="text-xs text-red-500 uppercase font-bold tracking-wide mb-1">Negative Score</div>
                     <ScoreBadge score={business.negativeScore} size="lg" />
