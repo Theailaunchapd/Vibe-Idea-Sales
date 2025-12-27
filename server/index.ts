@@ -43,11 +43,11 @@ const cleanJson = (text: string): string => {
 };
 
 app.post('/api/search-jobs', async (req, res) => {
-  const { query, location } = req.body;
+  const { query, location, radius = 25 } = req.body;
   
   const prompt = `
     You are a Job Market Intelligence Agent.
-    Task: Search for 15-20 realistic job postings for "${query}" in "${location}".
+    Task: Search for 15-20 realistic job postings for "${query}" in "${location}" within a ${radius}-mile radius.
     
     For each job, extract or simulate realistic details found on major job boards (Indeed, LinkedIn, etc.):
     1. Job Title & Company Name.
@@ -56,6 +56,7 @@ app.post('/api/search-jobs', async (req, res) => {
     4. Key responsibilities snippet (2-3 sentences).
     5. Required skills (3-5 keywords).
     6. "AI Potential Score" (0-100): How easily can this role be automated or augmented by AI?
+    7. Location should be within ${radius} miles of ${location}.
 
     Return JSON with structure:
     {
@@ -98,17 +99,17 @@ app.post('/api/search-jobs', async (req, res) => {
 });
 
 app.post('/api/search-businesses', async (req, res) => {
-  const { industry, location } = req.body;
+  const { industry, location, radius = 25 } = req.body;
 
   const prompt = `
     You are an AI Business Opportunity Analyzer.
-    Task: Identify EXACTLY 100 UNIQUE struggling businesses in the "${industry}" industry in "${location}" that are likely hiring for operational roles.
+    Task: Identify EXACTLY 100 UNIQUE struggling businesses in the "${industry}" industry within a ${radius}-mile radius of "${location}" that are likely hiring for operational roles.
     
     CRITICAL REQUIREMENTS:
     - Generate EXACTLY 100 businesses
     - Each business MUST be completely unique (different names, addresses, characteristics)
     - Vary business names creatively - use different naming patterns, owner names, locations within ${location}
-    - Distribute businesses across different neighborhoods/areas in ${location}
+    - Distribute businesses across different neighborhoods/areas within ${radius} miles of ${location}
     - Vary negative scores between 60-95
     - Create diverse pain points and review patterns
     - Use realistic but varied contact information
@@ -151,7 +152,7 @@ app.post('/api/search-businesses', async (req, res) => {
       ]
     }
     
-    Remember: Create exactly 100 unique, diverse businesses. No duplicates.
+    Remember: Create exactly 100 unique, diverse businesses within ${radius} miles of ${location}. No duplicates.
   `;
 
   try {
