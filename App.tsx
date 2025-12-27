@@ -111,8 +111,18 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Saved Leads CRM (per-user) - use authenticated user ID if available, otherwise fall back to old profile ID
-  const userId = authenticatedUser?.id || userProfile?.id || null;
+  // Saved Leads CRM (per-user) - use authenticated user ID if available, otherwise fall back to old profile ID or generate guest ID
+  const userId = useMemo(() => {
+    if (authenticatedUser?.id) return authenticatedUser.id;
+    if (userProfile?.id) return userProfile.id;
+    // Generate a guest ID for anonymous users so CRM still works
+    let guestId = localStorage.getItem('vib3_guest_id');
+    if (!guestId) {
+      guestId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem('vib3_guest_id', guestId);
+    }
+    return guestId;
+  }, [authenticatedUser?.id, userProfile?.id]);
   const [crmLeads, setCrmLeads] = useState<CrmLead[]>(() => (userId ? loadCrmLeads(userId) : []));
 
   useEffect(() => {
